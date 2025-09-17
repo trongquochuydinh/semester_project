@@ -20,12 +20,17 @@ services:
     ports:
       - "8080:8080"
 
-  web_app:
-    build: ./web_app
-    container_name: inventory_web
-    environment:
-      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+  api:
+    image: ghcr.io/trongquochuydinh/semester_project/inventory_api:latest
     ports:
-      - "5000:5000"  # expose Flask
+      - "8000:8000"
     depends_on:
       - db
+
+  web_app:
+    image: ghcr.io/trongquochuydinh/semester_project/inventory_web:latest
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - api

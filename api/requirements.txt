@@ -1,20 +1,12 @@
 fastapi==0.108.0
-Flask==3.0.0
-Flask-Compress==1.14
-flask-session
-flask_sqlalchemy
-httplib2==0.22.0
-imageio==2.33.1
-imageio-ffmpeg==0.4.9
-importlib-metadata==7.0.1
-importlib-resources==6.1.1
-Jinja2==3.1.2
-pandas==2.0.3
-pillow==10.2.0
-plotly==5.18.0
-PyYAML==6.0.2
-requests==2.31.0
-requests-oauthlib==1.3.1
-SQLAlchemy==2.0.25
-typing_extensions==4.9.0
-urllib3==2.1.0
+uvicorn[standard]==0.27.0  # ASGI server for FastAPI
+
+SQLAlchemy==2.0.25          # ORM
+psycopg2-binary==2.9.9      # PostgreSQL driver
+
+requests==2.31.0            # HTTP client
+PyYAML==6.0.2               # config parsing
+
+pandas==2.0.3               # data processing (optional)
+pillow==10.2.0              # image handling (optional)
+plotly==5.18.0              # visualization (optional)
