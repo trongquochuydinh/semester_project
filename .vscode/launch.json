@@ -1,0 +1,25 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Web App",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "web_app/__init__.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": ".", 
+                "DB_HOST": "localhost",
+                "DB_USER": "postgres",
+                "DB_NAME": "inventory_db",
+                "DB_PASSWORD": "postgres",
+                "FLASK_SECRET_KEY": "f1c893bfb0c4d2e3b6d79df8c1d05f4ed2b1c78d1a1e0f48c2ef54c4b8a9e89e"
+            }
+        },
+    ]
+}
