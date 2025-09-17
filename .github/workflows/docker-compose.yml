@@ -1,8 +1,8 @@
 name: Build and Push Docker Images
 
 on:
-  release:
-    types: [published]   # Runs only when you publish a GitHub Release
+  push:
+    branches: [main]
 
 permissions:
   contents: read
