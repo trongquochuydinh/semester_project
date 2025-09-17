@@ -1,0 +1,45 @@
+name: Build and Push Docker Images
+
+on:
+  release:
+    types: [published]   # Runs only when you publish a GitHub Release
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # 2. Log in to GitHub Container Registry (ghcr.io)
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3. Build and push API image
+      - name: Build and push API image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./api
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/inventory_api:latest
+
+      # 4. Build and push Web App image
+      - name: Build and push Web App image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./web_app
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/inventory_web:latest
+
