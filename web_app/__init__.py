@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Blueprint
 import os
 
+from config import FLASK_SECRET_KEY
+
 # initialize Flask
 app = Flask(__name__)
 
 # configure app
-app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY", "f1c893bfb0c4d2e3b6d79df8c1d05f4ed2b1c78d1a1e0f48c2ef54c4b8a9e89e")
+app.config["SECRET_KEY"] = FLASK_SECRET_KEY
 
 # Example route
 @app.route('/')
