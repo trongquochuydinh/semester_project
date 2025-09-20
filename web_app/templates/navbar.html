@@ -1,0 +1,17 @@
+<nav class="navbar">
+    <span class="hamburger-btn material-symbols-rounded">menu</span>
+    <a href="#" class="logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo">
+        <h2>CodingNepal</h2>
+    </a>
+    <ul class="links">
+        <span class="close-btn material-symbols-rounded">close</span>
+        {# Example: show menu items based on user roles #}
+        {% if 'superadmin' in session.get('user', {}).get('roles', []) %}
+            <li><a href="#">Admin Panel</a></li>
+        {% endif %}
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Items</a></li>
+        <li><a href="#">Orders</a></li>
+    </ul>
+</nav>

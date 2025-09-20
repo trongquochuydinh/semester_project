@@ -1,1 +1,6 @@
 venv
+launch.json
+config.
+__pycache__
+*.pyc
+.env

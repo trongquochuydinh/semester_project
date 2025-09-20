@@ -7,6 +7,8 @@ psycopg2-binary==2.9.9      # PostgreSQL driver
 requests==2.31.0            # HTTP client
 PyYAML==6.0.2               # config parsing
 
+gunicorn
+
 pandas==2.0.3               # data processing (optional)
 pillow==10.2.0              # image handling (optional)
 plotly==5.18.0              # visualization (optional)

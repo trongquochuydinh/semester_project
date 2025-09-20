@@ -56,8 +56,19 @@ CREATE TABLE order_items (
     quantity INT NOT NULL
 );
 
--- Insert a superadmin user (replace <hash> with a real hash from werkzeug.security.generate_password_hash)
-INSERT INTO users (username, email, password_hash, company_id) VALUES ('superadmin', 'superadmin@example.com', '$pbkdf2-sha256$29000$examplehash', NULL);
+-- Insert all roles
+INSERT INTO roles (name) VALUES ('superadmin');
+INSERT INTO roles (name) VALUES ('admin');
+INSERT INTO roles (name) VALUES ('manager');
+INSERT INTO roles (name) VALUES ('employee');
+
+-- Insert a superadmin user with password 'superadmin123'
+INSERT INTO users (username, email, password_hash, company_id) VALUES (
+    'superadmin',
+    'superadmin@example.com',
+    'scrypt:32768:8:1$wk4JJ39TL4Glv7P1$0a9373685b37c8d9479f64f5163a7a881425bc045692898ce87017831e5974e89b8f38bcd968792ee62c56042d3b8be8a08c1150b9508f15fd0237b166f49b25',
+    NULL
+);
 
 -- Assign superadmin role to the superadmin user (assuming role id 1 is 'superadmin')
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
