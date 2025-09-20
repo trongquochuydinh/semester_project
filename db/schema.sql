@@ -55,3 +55,9 @@ CREATE TABLE order_items (
     item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
     quantity INT NOT NULL
 );
+
+-- Insert a superadmin user (replace <hash> with a real hash from werkzeug.security.generate_password_hash)
+INSERT INTO users (username, email, password_hash, company_id) VALUES ('superadmin', 'superadmin@example.com', '$pbkdf2-sha256$29000$examplehash', NULL);
+
+-- Assign superadmin role to the superadmin user (assuming role id 1 is 'superadmin')
+INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
