@@ -20,6 +20,8 @@ PyYAML==6.0.2
 # Utilities
 python-dotenv==1.0.1
 
+gunicorn
+
 # Optional (if frontend needs data/plots)
 pandas==2.0.3
 pillow==10.2.0
