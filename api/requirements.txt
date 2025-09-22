@@ -7,7 +7,8 @@ psycopg2-binary==2.9.9      # PostgreSQL driver
 requests==2.31.0            # HTTP client
 PyYAML==6.0.2               # config parsing
 
-gunicorn
+gunicorn==23.0.0            # WSGI/ASGI server
+werkzeug==3.0.1             # password hashing utilities
 
 pandas==2.0.3               # data processing (optional)
 pillow==10.2.0              # image handling (optional)
