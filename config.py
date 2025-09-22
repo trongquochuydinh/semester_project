@@ -6,3 +6,4 @@ user = os.environ.get('DB_USER')
 password = os.environ.get('DB_PASSWORD')
 
 FLASK_SECRET_KEY = os.environ.get('FLASK_SECRET_KEY')
+API_URL = os.environ.get('API_URL', 'http://localhost:8500')

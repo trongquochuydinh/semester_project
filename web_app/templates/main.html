@@ -1,26 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website with Login Form | CodingNepal</title>
-    <!-- Google Fonts Link For Icons -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
-</head>
-<body class="show-popup">
-    <header>
-        {% include 'navbar.html' %}
-    </header>
+{% extends "base.html" %}
+
+{% block title %}Main | CodingNepal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+{% endblock %}
+
+{% block content %}
     <div class="blur-bg-overlay"></div>
+    {% if not session.get('user') %}
     <div class="form-popup">
         <div class="form-box login">
-            <div class="form-details">
-            </div>
+            <div class="form-details"></div>
             <div class="form-content">
                 <h2>LOGIN</h2>
-                <form action="#">
+                <form>
                     <div class="input-field">
                         <input type="text" required>
                         <label>Username or Email</label>
@@ -35,5 +29,9 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

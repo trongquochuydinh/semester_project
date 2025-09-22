@@ -23,13 +23,15 @@ services:
   api:
     image: ghcr.io/trongquochuydinh/semester_project/inventory_api:latest
     ports:
-      - "8000:8000"
+      - "8500:8500"
     depends_on:
       - db
 
   web_app:
     image: ghcr.io/trongquochuydinh/semester_project/inventory_web:latest
+    environment:
+      - API_URL=http://api:8500
     ports:
-      - "5000:5000"
+      - "8000:8000"
     depends_on:
       - api

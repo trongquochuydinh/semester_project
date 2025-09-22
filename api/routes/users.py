@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from api.models.user import verify_user
 
-router = APIRouter(prefix="/api", tags=["users"])
+router = APIRouter(prefix="/api/users", tags=["users"])
 
 class LoginRequest(BaseModel):
     identifier: str  # username or email

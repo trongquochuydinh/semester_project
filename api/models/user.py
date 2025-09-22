@@ -43,3 +43,17 @@ def verify_user(identifier, password):
     if user and user.verify_password(password):
         return user
     return None
+
+def paginate_users(db, limit, offset, filters):
+    query = db.query(User)
+    for key, value in filters.items():
+        if hasattr(User, key):
+            query = query.filter(getattr(User, key) == value)
+    total = query.count()
+    results = query.offset(offset).limit(limit).all()
+    def to_dict(obj):
+        d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+        d.pop("password_hash", None)
+        return d
+    data = [to_dict(r) for r in results]
+    return {"total": total, "data": data}
