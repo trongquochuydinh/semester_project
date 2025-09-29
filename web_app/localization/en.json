@@ -1,0 +1,11 @@
+{
+    "login": "Login",
+    "home": "Home",
+    "user_panel": "User Panel",
+    "create_user": "Create user",
+    "id": "ID",
+    "username": "Username",
+    "email": "Email",
+    "roles": "Roles",
+    "company": "Company"
+}

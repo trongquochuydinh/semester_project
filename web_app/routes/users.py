@@ -13,7 +13,7 @@ def send_login_request(identifier, password):
                 'id': user_data['id'],
                 'username': user_data['username'],
                 'email': user_data['email'],
-                'roles': user_data['roles'],
+                'role': user_data['role'],
                 'company_id': user_data.get('company_id')
             }
             return jsonify({'success': True, 'user': user_data})
@@ -27,5 +27,29 @@ def users_table_data(data):
     try:
         res = requests.post(api_url, json=data)
         return (res.text, res.status_code, res.headers.items())
+    except Exception as e:
+        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
+    
+def get_roles():
+    api_url = f"{API_URL}/api/users/roles"
+    try:
+        res = requests.get(api_url)
+        return (res.text, res.status_code, res.headers.items())
+    except Exception as e:
+        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
+
+def create_user(data):
+    api_url = f"{API_URL}/api/users/create"
+    try:
+        res = requests.post(api_url, json=data)
+        if res.status_code == 200:
+            resp_json = res.json()
+            return jsonify({
+                'success': True,
+                'message': resp_json.get('message'),
+                'initial_password': resp_json.get('initial_password')
+            })
+        else:
+            return (res.text, res.status_code, res.headers.items())
     except Exception as e:
         return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502

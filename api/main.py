@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, HTTPException
 import uvicorn
 import os
 from api.routes.users import router as users_router
+from api.routes.companies import router as companies_router
 from api.db.db_engine import SessionLocal
 from api.models.user import User, paginate_users
 from api.models.company import Company, paginate_companies
@@ -12,6 +13,7 @@ from sqlalchemy import and_
 
 app = FastAPI()
 app.include_router(users_router)
+app.include_router(companies_router)
 
 @app.post("/api/paginate")
 async def paginate(request: Request):
