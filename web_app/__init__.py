@@ -44,13 +44,16 @@ def inject_translator():
 
 @app.route('/')
 def init_home():
-    return render_template('main.html')
+    if session.get('user') is None:
+        return render_template('login.html')
+
+    return render_template('index.html')
 
 @app.route('/users_panel')
 def users_panel():
 
     if session.get('user') is None:
-        return render_template('main.html')
+        return render_template('login.html')
 
     return render_template('users_panel.html')
 
@@ -65,12 +68,12 @@ def login_proxy():
 @app.route('/logout')
 def logout():
     session.clear()
-    return render_template('main.html')
+    return render_template('login.html')
 
 @app.route('/create_user', methods=['POST'])
 def admin_create_user():
     if session.get('user') is None:
-        return render_template('main.html')
+        return render_template('index.html')
 
     if request.method == 'POST':
         data = request.get_json()
