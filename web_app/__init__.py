@@ -1,14 +1,9 @@
 import os
 from flask import Flask, render_template, g, request, redirect, url_for, session, jsonify, Blueprint
 
-from web_app.routes.users import send_login_request, users_table_data, create_user, get_roles as proxy_get_roles
+from web_app.routes.users import send_login_request, users_table_data, create_user as proxy_create_user, get_roles as proxy_get_roles
 from web_app.routes.companies import get_companies as proxy_get_companies
 from web_app.localization.localization import Translator
-
-
-# QHDT - kSytMPBqs2
-
-# dkasofjoe - 1Zf0NCKozb
 
 # initialize Flask
 app = Flask(__name__)
@@ -29,14 +24,13 @@ def set_language_context():
     g.lang = session.get('lang', 'en')
     translator.set_language(g.lang)
     # Set default user if not already in session
-    # if 'user' not in session:
-    #     session['user'] = {
-    #         'id': 1,
-    #         'username': 'test_user',
-    #         'email': 'test_user@example.com',
-    #         'role': 'superadmin',
-    #         'company_id': 1
-    #     }
+    if 'user' not in session:
+        session['user'] = {
+            'id': 1,
+            'username': 'test_user',
+            'email': 'test_user@example.com',
+            'role': 'superadmin'
+        }
 
 @app.context_processor
 def inject_translator():
@@ -49,13 +43,13 @@ def init_home():
 
     return render_template('index.html')
 
-@app.route('/users_panel')
-def users_panel():
+@app.route('/user_management')
+def user_management():
 
     if session.get('user') is None:
         return render_template('login.html')
 
-    return render_template('users_panel.html')
+    return render_template('user_management.html')
 
 @app.route('/login', methods=['POST'])
 def login_proxy():
@@ -71,13 +65,13 @@ def logout():
     return render_template('login.html')
 
 @app.route('/create_user', methods=['POST'])
-def admin_create_user():
+def create_user():
     if session.get('user') is None:
         return render_template('index.html')
 
     if request.method == 'POST':
         data = request.get_json()
-        return create_user(data)
+        return proxy_create_user(data)
     return '', 405
 
 @app.route("/get_roles")

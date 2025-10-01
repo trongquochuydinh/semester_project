@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from api.models.user import verify_user, User, UserRole, Role
@@ -49,15 +49,27 @@ def login(data: LoginRequest):
     )
 
 @router.get("/roles", response_model=RolesResponse)
-def get_roles():
+def get_roles(creator_role: str = Query(...)):
     session = SessionLocal()
     try:
         roles = session.query(Role).all()
-        role_objs = [RoleOut(id=role.id, name=role.name) for role in roles]
+
+        # Filter depending on who is creating
+        if creator_role == "superadmin":
+            allowed = {"admin"}
+        elif creator_role == "admin":
+            allowed = {"manager", "employee"}
+        else:
+            allowed = set()  # no creation rights
+
+        role_objs = [
+            RoleOut(id=role.id, name=role.name)
+            for role in roles if role.name.lower() in allowed
+        ]
         return RolesResponse(roles=role_objs)
     finally:
         session.close()
-
+        
 @router.post("/create")
 def create_user_endpoint(data: UserCreate):
     session = SessionLocal()

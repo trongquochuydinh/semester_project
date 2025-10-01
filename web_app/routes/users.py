@@ -31,7 +31,11 @@ def users_table_data(data):
         return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
     
 def get_roles():
-    api_url = f"{API_URL}/api/users/roles"
+    if session.get('user') is None:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    user_role = session['user']['role']   # e.g. "superadmin", "admin"
+    api_url = f"{API_URL}/api/users/roles?creator_role={user_role}"
     try:
         res = requests.get(api_url)
         return (res.text, res.status_code, res.headers.items())
