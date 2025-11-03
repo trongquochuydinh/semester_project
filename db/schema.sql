@@ -2,7 +2,7 @@
 CREATE TABLE companies (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
-    industry TEXT
+    field TEXT
 );
 
 -- Users
@@ -12,6 +12,8 @@ CREATE TABLE users (
     username TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    status TEXT DEFAULT 'offline', -- online, offline (indicates if user is currently logged in)
+    last_login TIMESTAMP, -- for statistics purposes
     company_id INT REFERENCES companies(id) ON DELETE CASCADE
 );
 

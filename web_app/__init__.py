@@ -1,8 +1,8 @@
 import os
 from flask import Flask, render_template, g, request, redirect, url_for, session, jsonify, Blueprint
 
-from web_app.routes.users import send_login_request, users_table_data, create_user as proxy_create_user, get_roles as proxy_get_roles
-from web_app.routes.companies import get_companies as proxy_get_companies
+from web_app.routes.users import send_login_request, users_table_data, create_user as proxy_create_user, get_roles as proxy_get_roles, logout_user as proxy_logout_user
+from web_app.routes.companies import get_companies as proxy_get_companies, companies_table_data
 from web_app.localization.localization import Translator
 
 # initialize Flask
@@ -24,13 +24,13 @@ def set_language_context():
     g.lang = session.get('lang', 'en')
     translator.set_language(g.lang)
     # Set default user if not already in session
-    if 'user' not in session:
-        session['user'] = {
-            'id': 1,
-            'username': 'test_user',
-            'email': 'test_user@example.com',
-            'role': 'superadmin'
-        }
+    # if 'user' not in session:
+    #     session['user'] = {
+    #         'id': 1,
+    #         'username': 'test_user',
+    #         'email': 'test_user@example.com',
+    #         'role': 'superadmin'
+    #     }
 
 @app.context_processor
 def inject_translator():
@@ -49,7 +49,15 @@ def user_management():
     if session.get('user') is None:
         return render_template('login.html')
 
-    return render_template('user_management.html')
+    return render_template('management_views/user_management.html')
+
+@app.route('/company_management')
+def company_management():
+
+    if session.get('user') is None:
+        return render_template('login.html')
+
+    return render_template('management_views/company_management.html')
 
 @app.route('/login', methods=['POST'])
 def login_proxy():
@@ -61,6 +69,14 @@ def login_proxy():
 
 @app.route('/logout')
 def logout():
+    # Update user status to offline in database before clearing session
+    if session.get('user') is not None:
+        try:
+            proxy_logout_user()
+        except Exception as e:
+            # Log the error but continue with logout
+            print(f"Error updating user status during logout: {e}")
+    
     session.clear()
     return render_template('login.html')
 
@@ -82,6 +98,12 @@ def get_roles():
 def get_companies():
     return proxy_get_companies()
 
+@app.route("/get_current_user")
+def get_current_user():
+    if session.get('user') is None:
+        return jsonify({'error': 'Not logged in'}), 401
+    return jsonify(session['user'])
+
 @app.route('/paginate', methods=['POST'])
 def paginate_proxy():
 
@@ -97,6 +119,8 @@ def paginate_proxy():
     # parse the data and determine which route it should use
     if data.get("table_name") == "users":
         return users_table_data(data)
+    elif data.get("table_name") == "companies":
+        return companies_table_data(data)
 
 # Only needed for local dev with `python -m web_app`
 if __name__ == '__main__':

@@ -49,6 +49,15 @@ function createUsersTableCard({ title, rows }) {
   return createTableCard({ title, columns, rows });
 }
 
+function createCompaniesTableCard({ title, rows }) {
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+    { key: "field", label: "Field" },
+  ];
+  return createTableCard({ title, columns, rows });
+}
+
 function createItemsTableCard({ title, rows }) {
   const columns = [
     { key: "id", label: "ID" },

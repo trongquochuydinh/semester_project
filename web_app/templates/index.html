@@ -6,6 +6,9 @@
 <div class="row" id="dashboard-row">
   {% if session['user']['role'] == 'superadmin' or session['user']['role'] == 'admin' %}
     <div id="users-table"></div>
+    {% if session['user']['role'] == 'superadmin' %}
+    <div id="companies-table"></div>
+    {% endif %}
   {% endif %}
   <div id="income-overview-chart"></div>
   <div id="visitor-chart"></div>
@@ -34,6 +37,15 @@
     });
     const users = await resUsers.json();
     container.appendChild(createUsersTableCard({ title: "Users", rows: users.data }));
+
+    // Companies
+    const resCompanies = await fetch("/paginate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table_name: "companies", limit: 5, offset: 0 })
+    });
+    const companies = await resCompanies.json();
+    container.appendChild(createCompaniesTableCard({ title: "Companies", rows: companies.data }));
   });
 </script>
 {% endblock %}

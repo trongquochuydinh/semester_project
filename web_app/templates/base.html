@@ -76,7 +76,22 @@
                             <span class="pc-mtext">Companies</span>
                         </a>
                     </li>
+                    {% elif session['user']['role'] == 'admin' %}
+                    <li class="pc-item">
+                        <a href="/user_management" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-user"></i></span>
+                            <span class="pc-mtext">Company users</span>
+                        </a>
+                    </li>
                     {% endif %}
+                    <li>
+                        <form action="/set_language" method="get" style="padding: 1rem; margin-top: 55vh;">
+                            <select class="form-control" name="lang" onchange="this.form.submit()">
+                                <option value="en" {% if g.lang == 'en' %}selected{% endif %}>English</option>
+                                <option value="cz" {% if g.lang == 'cz' %}selected{% endif %}>Čeština</option>
+                            </select>
+                        </form>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -233,7 +248,7 @@
                         <i class="ti ti-edit-circle"></i>
                         <span>Edit Profile</span>
                         </a>
-                        <a href="#" class="dropdown-item" id="logout-link">
+                        <a href="/logout" class="dropdown-item" id="logout-link">
                         <i class="ti ti-power"></i>
                         <span>Logout</span>
                         </a>

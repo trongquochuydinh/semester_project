@@ -57,3 +57,15 @@ def create_user(data):
             return (res.text, res.status_code, res.headers.items())
     except Exception as e:
         return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
+
+def logout_user():
+    if session.get('user') is None:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    user_id = session['user']['id']
+    api_url = f"{API_URL}/api/users/logout"
+    try:
+        res = requests.post(api_url, json={'user_id': user_id})
+        return (res.text, res.status_code, res.headers.items())
+    except Exception as e:
+        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502

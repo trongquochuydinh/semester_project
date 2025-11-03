@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, joinedload
 from api.db.db_engine import Base, SessionLocal
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -14,6 +14,8 @@ class User(Base):
     username = Column(String, unique=True, nullable=False, index=True)
     email = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
+    status = Column(String, default='offline', nullable=False)  # online, offline
+    last_login = Column(DateTime, nullable=True)  # for statistics
     company_id = Column(Integer, ForeignKey('companies.id'), nullable=True)
     # Use only the first role for single-role logic
     def get_role(self):
@@ -105,18 +107,3 @@ class UserResponse(BaseModel):
     email: str
     company_id: Optional[int] = None
     role: str
-
-@router.post("/login", response_model=UserResponse)
-def login(data: LoginRequest):
-    user = verify_user(data.identifier, data.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    # Get the single role name (assume one role per user)
-    role = user.roles[0].role.name if user.roles and user.roles[0].role else None
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        company_id=user.company_id,
-        role=role
-    )

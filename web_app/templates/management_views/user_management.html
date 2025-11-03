@@ -5,28 +5,30 @@
 {% block content %}
 <div class="row" id="dashboard-row">
   <div class="card p-3 mt-3">
-    <h5>Create User</h5>
+    <h5>{{ t('CreateAdmin') }}</h5>
     <form id="create-user-form">
       <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
+        <label for="username" class="form-label">{{ t('username') }}</label>
         <input type="text" class="form-control" id="username" name="username" required>
       </div>
       <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
+        <label for="email" class="form-label">{{ t('email') }}</label>
         <input type="email" class="form-control" id="email" name="email" required>
       </div>
       <div class="mb-3">
-        <label for="role" class="form-label">Role</label>
+        <label for="role" class="form-label">{{ t('role') }}</label>
         <select class="form-select" id="role" name="role"></select>
       </div>
-    {% if session['user']['role'] == 'superadmin' %}
       <div class="mb-3">
-        <label for="company" class="form-label">Company</label>
+        <label for="company" class="form-label">{{ t('company') }}</label>
         <select class="form-select" id="company" name="company"></select>
       </div>
-    {% endif %}
-      <button type="submit" class="btn btn-primary">Create</button>
+      <button type="submit" class="btn btn-primary">{{ t('Create') }}</button>
     </form>
+    <div id="password-display" style="display:none; margin-top:1em; padding:10px; border:1px solid #ccc; border-radius:6px;">
+      <strong>Initial password:</strong>
+      <input id="generated-password" readonly style="margin-left:10px; font-family:monospace; padding:5px;" />
+    </div>
   </div>
 </div>
 {% endblock %}
