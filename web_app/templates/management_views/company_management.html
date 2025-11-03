@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Company Management{% endblock %}
+
+{% block content %}
+<div class="row" id="dashboard-row">
+  <div class="card p-3 mt-3">
+    <h5>{{ t('CreateCompany') }}</h5>
+    <form id="create-user-form">
+      <div class="mb-3">
+        <label for="username" class="form-label">{{ t('company_name') }}</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+      <div class="mb-3">
+        <label for="field" class="form-label">{{ t('field') }}</label>
+        <input type="text" class="form-control" id="field" name="field">
+      </div>
+      <button type="submit" class="btn btn-primary">{{ t('Create') }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/company_management.js') }}"></script>
+{% endblock %}

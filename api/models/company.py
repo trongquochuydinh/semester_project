@@ -5,7 +5,7 @@ class Company(Base):
     __tablename__ = 'companies'
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
-    industry = Column(String)
+    field = Column(String)
 
 def paginate_companies(db, limit, offset, filters):
     query = db.query(Company)

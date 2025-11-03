@@ -4,8 +4,13 @@
     "user_panel": "User Panel",
     "create_user": "Create user",
     "id": "ID",
+    "CreateAdmin": "Create Admin",
     "username": "Username",
     "email": "Email",
-    "roles": "Roles",
-    "company": "Company"
+    "role": "Role",
+    "company": "Company",
+    "CreateCompany": "Create Company",
+    "company_name": "company name",
+    "field": "field",
+    "Create": "Create"
 }

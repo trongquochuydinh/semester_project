@@ -4,8 +4,13 @@
     "user_panel": "Panel uživatelů",
     "create_user": "Vytvořit uživatele",
     "id": "ID",
+    "CreateAdmin": "Vytvořit Admina",
     "username": "Uživatelské jméno",
     "email": "Email",
-    "roles": "Role",
-    "company": "Společnost"
+    "role": "Role",
+    "company": "Společnost",
+    "CreateCompany": "Vytvořit Společnost",
+    "company_name": "Jméno společnosti",
+    "field": "oblast",
+    "Create": "Vytvořit"
 }
