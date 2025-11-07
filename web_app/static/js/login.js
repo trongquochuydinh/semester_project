@@ -3,9 +3,10 @@ document.querySelector('.btn.btn-primary').addEventListener('click', function() 
     const password = document.querySelector('input[type="password"]').value;
 
     fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: email, password: password })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin', // <- ensures cookie is stored
+    body: JSON.stringify({ identifier: email, password: password })
     })
     .then(response => response.json())
     .then(data => {

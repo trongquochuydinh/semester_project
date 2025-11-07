@@ -1,15 +1,20 @@
-fastapi==0.108.0
-uvicorn[standard]==0.27.0  # ASGI server for FastAPI
+# ---------------- Core Framework ----------------
+fastapi[all]==0.108.0       # FastAPI with built-in extras (CORS, security, etc.)
+uvicorn[standard]==0.27.0   # ASGI server for FastAPI
+gunicorn==23.0.0            # Optional: multi-worker server for deployment
 
+# ---------------- Database ----------------
 SQLAlchemy==2.0.25          # ORM
 psycopg2-binary==2.9.9      # PostgreSQL driver
 
-requests==2.31.0            # HTTP client
-PyYAML==6.0.2               # config parsing
+# ---------------- Networking ----------------
+requests==2.31.0            # HTTP client for internal API calls
 
-gunicorn==23.0.0            # WSGI/ASGI server
-werkzeug==3.0.1             # password hashing utilities
+# ---------------- Security & Auth ----------------
+PyJWT==2.8.0                # JSON Web Token generation/verification
+werkzeug==3.0.1             # Password hashing utilities (generate/check hash)
 
-pandas==2.0.3               # data processing (optional)
-pillow==10.2.0              # image handling (optional)
-plotly==5.18.0              # visualization (optional)
+# ---------------- Data & Visualization (optional) ----------------
+pandas==2.0.3               # Data processing (optional)
+pillow==10.2.0              # Image handling (optional)
+plotly==5.18.0              # Visualization (optional)

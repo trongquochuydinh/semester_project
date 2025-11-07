@@ -1,71 +1,21 @@
-from flask import request, session, jsonify
-import requests
+from flask import Blueprint, request, session, render_template, jsonify
+from web_app.routes.api_clients.users_client import users_table_data, create_user as proxy_create_user, get_roles as proxy_get_roles
 
-from config import API_URL
+users_bp = Blueprint('users', __name__, url_prefix='/users')
 
-def send_login_request(identifier, password):
-    api_url = f'{API_URL}/api/users/login'
-    try:
-        res = requests.post(api_url, json={'identifier': identifier, 'password': password})
-        if res.status_code == 200:
-            user_data = res.json()
-            session['user'] = {
-                'id': user_data['id'],
-                'username': user_data['username'],
-                'email': user_data['email'],
-                'role': user_data['role'],
-                'company_id': user_data.get('company_id')
-            }
-            return jsonify({'success': True, 'user': user_data})
-        else:
-            return (res.text, res.status_code, res.headers.items())
-    except Exception as e:
-        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
-    
-def users_table_data(data):
-    api_url = f"{API_URL}/api/paginate"
-    try:
-        res = requests.post(api_url, json=data)
-        return (res.text, res.status_code, res.headers.items())
-    except Exception as e:
-        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
-    
+@users_bp.route('/management')
+def user_management():
+    if session.get('user') is None:
+        return render_template('login.html')
+    return render_template('management_views/user_management.html')
+
+@users_bp.route('/create', methods=['POST'])
+def create_user():
+    if session.get('user') is None:
+        return render_template('index.html')
+    data = request.get_json()
+    return proxy_create_user(data)
+
+@users_bp.route('/get_roles')
 def get_roles():
-    if session.get('user') is None:
-        return jsonify({'error': 'Not logged in'}), 401
-    
-    user_role = session['user']['role']   # e.g. "superadmin", "admin"
-    api_url = f"{API_URL}/api/users/roles?creator_role={user_role}"
-    try:
-        res = requests.get(api_url)
-        return (res.text, res.status_code, res.headers.items())
-    except Exception as e:
-        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
-
-def create_user(data):
-    api_url = f"{API_URL}/api/users/create"
-    try:
-        res = requests.post(api_url, json=data)
-        if res.status_code == 200:
-            resp_json = res.json()
-            return jsonify({
-                'success': True,
-                'message': resp_json.get('message'),
-                'initial_password': resp_json.get('initial_password')
-            })
-        else:
-            return (res.text, res.status_code, res.headers.items())
-    except Exception as e:
-        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
-
-def logout_user():
-    if session.get('user') is None:
-        return jsonify({'error': 'Not logged in'}), 401
-    
-    user_id = session['user']['id']
-    api_url = f"{API_URL}/api/users/logout"
-    try:
-        res = requests.post(api_url, json={'user_id': user_id})
-        return (res.text, res.status_code, res.headers.items())
-    except Exception as e:
-        return jsonify({'error': 'API connection failed', 'detail': str(e)}), 502
+    return proxy_get_roles()
