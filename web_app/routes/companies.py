@@ -1,5 +1,5 @@
 from flask import Blueprint, session, render_template
-from web_app.routes.api_clients.companies_client import get_companies as proxy_get_companies, companies_table_data
+from web_app.routes.api_clients.companies_client import get_companies as proxy_get_companies
 
 companies_bp = Blueprint('companies', __name__, url_prefix='/companies')
 
