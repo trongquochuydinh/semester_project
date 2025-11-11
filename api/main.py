@@ -1,40 +1,14 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI
 import uvicorn
 import os
 from api.routes.users import router as users_router
 from api.routes.companies import router as companies_router
-from api.db.db_engine import SessionLocal
-from api.models.user import User, paginate_users
-from api.models.company import Company, paginate_companies
-from typing import Any
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from api.routes.paginate import router as paginate_router
 
 app = FastAPI()
 app.include_router(users_router)
 app.include_router(companies_router)
-
-@app.post("/api/paginate")
-async def paginate(request: Request):
-    body = await request.json()
-    table_name = body.get("table_name")
-    limit = int(body.get("limit", 10))
-    offset = int(body.get("offset", 0))
-    filters = body.get("filters", {})
-    db: Session = SessionLocal()
-    try:
-        handler_map = {
-            "users": paginate_users,
-            "companies": paginate_companies
-            # Add more handlers as needed
-        }
-        handler = handler_map.get(table_name)
-        if not handler:
-            raise HTTPException(status_code=400, detail="Invalid table_name")
-        return handler(db, limit, offset, filters)
-    finally:
-        db.close()
+app.include_router(paginate_router)
 
 if __name__ == "__main__":
     def run_service():

@@ -68,7 +68,7 @@ INSERT INTO roles (name) VALUES ('employee');
 INSERT INTO users (username, email, password_hash, company_id) VALUES (
     'superadmin',
     'superadmin@example.com',
-    'scrypt:32768:8:1$wk4JJ39TL4Glv7P1$0a9373685b37c8d9479f64f5163a7a881425bc045692898ce87017831e5974e89b8f38bcd968792ee62c56042d3b8be8a08c1150b9508f15fd0237b166f49b25',
+    'scrypt:32768:8:1$VRMWaz97BQ7NYnNr$1c6a0e1e924fcdd3990d9df72610a538afad647a71d337e639e76b24a669f1bb3a8ace9185297c83a69606240ca7efb65f895294cdd3fa9f125b7fb4d88e62fa',
     NULL
 );
 
