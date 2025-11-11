@@ -1,70 +1,17 @@
 import secrets
 import string
-from datetime import datetime
-from fastapi import HTTPException
-from fastapi.params import Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Dict
+from fastapi import Depends, HTTPException
 from requests import Session
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import Session, joinedload
 from werkzeug.security import generate_password_hash
 
 from api.db.db_engine import SessionLocal, get_db
-from api.models.user import User, UserRole, Role, verify_user
-from api.utils.auth_utils import create_access_token, decode_access_token
+from api.models.user import User, UserRole, Role
 
-security = HTTPBearer()
-
-def get_current_user(
-    token: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> User:
-    payload = decode_access_token(token.credentials)
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-
-    user = (
-        db.query(User)
-        .options(joinedload(User.roles).joinedload(UserRole.role))
-        .filter(User.id == user_id)
-        .first()
-    )
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
-
-
-def login_user(identifier: str, password: str):
-    user = verify_user(identifier, password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    # Update status + timestamp
-    session = SessionLocal()
+def get_subroles_for_role(creator_role: str, db: Session = Depends(get_db)):
     try:
-        db_user = session.query(User).filter(User.id == user.id).first()
-        if db_user:
-            db_user.status = "online"
-            db_user.last_login = datetime.now()
-            session.commit()
-    finally:
-        session.close()
-
-    role_name = user.roles[0].role.name if user.roles and user.roles[0].role else None
-    token = create_access_token(user.id, role_name)
-
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "id": user.id,
-        "username": user.username,
-    }
-
-
-def get_subroles_for_role(creator_role: str):
-    session = SessionLocal()
-    try:
-        roles = session.query(Role).all()
+        roles = db.query(Role).all()
         role_map = {
             "superadmin": {"admin"},
             "admin": {"manager", "employee"},
@@ -73,11 +20,10 @@ def get_subroles_for_role(creator_role: str):
         allowed = role_map.get(creator_role.lower(), set())
         return [r for r in roles if r.name.lower() in allowed]
     finally:
-        session.close()
+        db.close()
 
 
-def create_user_account(data):
-    session = SessionLocal()
+def create_user_account(data, db: Session = Depends(get_db)):
     try:
         alphabet = string.ascii_letters + string.digits
         initial_password = "".join(secrets.choice(alphabet) for _ in range(10))
@@ -90,29 +36,117 @@ def create_user_account(data):
             password_hash=password_hash,
             status="offline",
         )
-        session.add(user)
-        session.commit()
-        session.refresh(user)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-        role = session.query(Role).filter_by(id=data.role_id).first()
+        role = db.query(Role).filter_by(id=data.role_id).first()
         if not role:
             raise HTTPException(status_code=400, detail="Role not found")
 
-        session.add(UserRole(user_id=user.id, role_id=role.id))
-        session.commit()
+        db.add(UserRole(user_id=user.id, role_id=role.id))
+        db.commit()
         return {"message": "User created successfully", "initial_password": initial_password}
     finally:
-        session.close()
+        db.close()
 
+def get_user_by_username_or_email(identifier: str, db: Session):
+    return (
+        db.query(User)
+        .options(joinedload(User.roles).joinedload(UserRole.role))
+        .filter((User.username == identifier) | (User.email == identifier))
+        .first()
+    )
 
-def logout_user(user_id: int):
-    session = SessionLocal()
-    try:
-        user = session.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        user.status = "offline"
-        session.commit()
-        return {"message": "User logged out successfully"}
-    finally:
-        session.close()
+def verify_user(identifier: str, password: str, db: Session):
+    user = get_user_by_username_or_email(identifier, db)
+    if user and user.verify_password(password):
+        return user
+    return None
+
+def create_user_account(data, db: Session):
+    """
+    Creates a new user account and assigns a role.
+    A random initial password is generated automatically.
+    """
+
+    # Generate a secure random initial password
+    alphabet = string.ascii_letters + string.digits
+    initial_password = "".join(secrets.choice(alphabet) for _ in range(10))
+    password_hash = generate_password_hash(initial_password)
+
+    # Create new user
+    user = User(
+        username=data.username,
+        email=data.email,
+        company_id=data.company_id,
+        password_hash=password_hash,
+        status="offline",
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    # Validate and assign role
+    role = db.query(Role).filter_by(id=data.role_id).first()
+    if not role:
+        raise HTTPException(status_code=400, detail="Role not found")
+
+    db.add(UserRole(user_id=user.id, role_id=role.id))
+    db.commit()
+
+    return {
+        "message": "User created successfully",
+        "initial_password": initial_password,
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email,
+    }
+
+def paginate_users(
+    db: Session,
+    limit: int,
+    offset: int,
+    filters: Dict,
+    user_role: str,
+    company_id: int
+):
+    hierarchy = {
+        "superadmin": ["admin"],
+        "admin": ["manager", "employee"],
+        "manager": ["employee"],
+        "employee": []
+    }
+    allowed_roles = hierarchy.get(user_role, None)
+
+    query = (
+        db.query(User)
+        .options(joinedload(User.roles).joinedload(UserRole.role), joinedload(User.company))
+    )
+
+    # Apply filters
+    for key, value in filters.items():
+        if hasattr(User, key):
+            query = query.filter(getattr(User, key) == value)
+
+    # Role-based filtering
+    if allowed_roles:
+        query = query.join(UserRole).join(Role).filter(Role.name.in_(allowed_roles))
+    elif allowed_roles == []:
+        query = query.filter(False)
+
+    # Company restriction
+    if company_id is not None:
+        query = query.filter(User.company_id == company_id)
+
+    total = query.count()
+    results = query.offset(offset).limit(limit).all()
+
+    def to_dict(obj):
+        d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+        d.pop("password_hash", None)
+        d["role_name"] = obj.roles[0].role.name if obj.roles and obj.roles[0].role else None
+        d["company_name"] = obj.company.name if hasattr(obj, "company") and obj.company else None
+        return d
+
+    return {"total": total, "data": [to_dict(r) for r in results]}

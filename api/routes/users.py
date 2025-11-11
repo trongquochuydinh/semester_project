@@ -7,7 +7,7 @@ from api.models.user import User
 from api.schemas.user_schema import (
     LoginRequest, UserResponse, UserCreate, RolesResponse, LogoutRequest, RoleOut
 )
-from api.services.user_service import (
+from api.services import (
     login_user, get_subroles_for_role, create_user_account, logout_user, get_current_user
 )
 
@@ -15,21 +15,21 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 security = HTTPBearer()
 
 @router.post("/login", response_model=UserResponse)
-def login(data: LoginRequest):
-    return login_user(data.identifier, data.password)
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    return login_user(data.identifier, data.password, db)
 
 @router.get("/get_subroles", response_model=RolesResponse)
-def get_subroles(creator_role: str = Query(...)):
-    roles = get_subroles_for_role(creator_role)
+def get_subroles(creator_role: str = Query(...), db: Session = Depends(get_db)):
+    roles = get_subroles_for_role(creator_role, db)
     return RolesResponse(roles=[RoleOut(id=r.id, name=r.name) for r in roles])
 
 @router.post("/create")
-def create_user_endpoint(data: UserCreate):
-    return create_user_account(data)
+def create_user_endpoint(data: UserCreate, db: Session = Depends(get_db)):
+    return create_user_account(data, db)
 
 @router.post("/logout")
-def logout(data: LogoutRequest):
-    return logout_user(data.user_id)
+def logout(data: LogoutRequest, db: Session = Depends(get_db)):
+    return logout_user(data.user_id, db)
 
 @router.get("/me")
 def get_me(token=Depends(security), db: Session = Depends(get_db)):
