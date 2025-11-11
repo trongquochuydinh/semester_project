@@ -3,9 +3,9 @@ from fastapi.security import HTTPBearer
 from api.db.db_engine import get_db
 from sqlalchemy.orm import Session
 from api.db.db_engine import SessionLocal
-from api.models.user import User, paginate_users
+from api.models.user import User
 from api.models.company import paginate_companies
-from api.routes.users import get_current_user
+from api.services import get_current_user, paginate_users
 
 security = HTTPBearer()
 
@@ -35,7 +35,7 @@ async def paginate(
             "users": paginate_users,
             "companies": paginate_companies,
         }
-        handler = handler_map.get(table_name)
+        handler = handler_map.get(table_name, db)
         if not handler:
             raise HTTPException(status_code=400, detail="Invalid table_name")
 
