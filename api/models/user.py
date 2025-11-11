@@ -54,56 +54,48 @@ def verify_user(identifier, password):
         return user
     return None
 
-def paginate_users(db, limit, offset, filters):
-    # Role hierarchy
+def paginate_users(db, limit, offset, filters, user_role, company_id):
     hierarchy = {
-        'superadmin': ['admin'],
-        'admin': ['manager', 'employee'],
-        'manager': ['employee'],
-        'employee': []
+        "superadmin": ["admin"],
+        "admin": ["manager", "employee"],
+        "manager": ["employee"],
+        "employee": []
     }
-    requesting_role = filters.pop('user_role', None)
-    company_id = filters.pop('company_id', None)
-    allowed_roles = hierarchy.get(requesting_role, None)
+
+    allowed_roles = hierarchy.get(user_role, None)
+
     query = db.query(User).options(
         joinedload(User.roles).joinedload(UserRole.role),
         joinedload(User.company)
     )
+
+    # 🟩 Apply filters (e.g. search conditions)
     for key, value in filters.items():
         if hasattr(User, key):
             query = query.filter(getattr(User, key) == value)
-    # Apply role-based filtering
-    if allowed_roles is not None and allowed_roles:
+
+    # 🟩 Apply role-based filtering
+    if allowed_roles:
         query = query.join(UserRole).join(Role).filter(Role.name.in_(allowed_roles))
     elif allowed_roles == []:
         query = query.filter(False)
-    # Apply company filtering if company_id is set
+
+    # 🟩 Apply company-level restrictions
     if company_id is not None:
         query = query.filter(User.company_id == company_id)
+
     total = query.count()
     results = query.offset(offset).limit(limit).all()
+
     def to_dict(obj):
         d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
         d.pop("password_hash", None)
-        # Get role name (assume one role per user)
-        if obj.roles:
-            user_role = obj.roles[0]
-            d["role_name"] = user_role.role.name if user_role.role else None
-        else:
-            d["role_name"] = None
-        # Get company name
-        d["company_name"] = obj.company.name if hasattr(obj, "company") and obj.company else None
+        d["role_name"] = (
+            obj.roles[0].role.name if obj.roles and obj.roles[0].role else None
+        )
+        d["company_name"] = (
+            obj.company.name if hasattr(obj, "company") and obj.company else None
+        )
         return d
-    data = [to_dict(r) for r in results]
-    return {"total": total, "data": data}
 
-class LoginRequest(BaseModel):
-    identifier: str
-    password: str
-
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-    company_id: Optional[int] = None
-    role: str
+    return {"total": total, "data": [to_dict(r) for r in results]}
