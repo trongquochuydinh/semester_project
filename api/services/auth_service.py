@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session, joinedload
 from api.db.db_engine import get_db
 from api.models.user import User, UserRole
 from api.services import verify_user
-from api.utils.auth_utils import create_access_token, decode_access_token
+from api.utils import create_access_token, decode_access_token
+from typing import List
 
 security = HTTPBearer()
 
@@ -28,6 +29,19 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
+def require_role(required_roles: List[str]):
+    def role_checker(current_user: User = Depends(get_current_user)):
+        role_name = (
+            current_user.roles[0].role.name
+            if current_user.roles and current_user.roles[0].role
+            else None
+        )
+
+        if role_name not in required_roles:
+            raise HTTPException(status_code=403, detail="Access forbidden")
+
+        return current_user  # still return the user for use in route
+    return role_checker
 
 def login_user(identifier: str, password: str, db: Session = Depends(get_db)):
 

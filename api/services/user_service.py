@@ -150,3 +150,19 @@ def paginate_users(
         return d
 
     return {"total": total, "data": [to_dict(r) for r in results]}
+
+def get_user_count(db: Session, company_id: int = None, online_only: bool = False):
+    """
+    Returns a user count.
+    If company_id is given, filters only that company.
+    If online_only=True, filters only users with status='online'.
+    """
+    query = db.query(User)
+
+    if company_id is not None:
+        query = query.filter(User.company_id == company_id)
+
+    if online_only:
+        query = query.filter(User.status == "online")
+
+    return query.count()

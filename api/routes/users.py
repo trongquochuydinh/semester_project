@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -8,7 +8,7 @@ from api.schemas.user_schema import (
     LoginRequest, UserResponse, UserCreate, RolesResponse, LogoutRequest, RoleOut
 )
 from api.services import (
-    login_user, get_subroles_for_role, create_user_account, logout_user, get_current_user
+    login_user, get_subroles_for_role, create_user_account, logout_user, get_current_user, require_role, get_user_count
 )
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -45,3 +45,27 @@ def get_me(token=Depends(security), db: Session = Depends(get_db)):
 def get_my_role(token=Depends(security), db: Session = Depends(get_db)):
     current_user = get_current_user(token, db)
     return {"role": current_user.roles[0].role.name if current_user.roles else None}
+
+@router.get("/get_user_stats")
+def get_user_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    role_name = (
+        current_user.roles[0].role.name
+        if current_user.roles and current_user.roles[0].role
+        else None
+    )
+
+    if role_name == "superadmin":
+        total = get_user_count(db)
+        online = get_user_count(db, online_only=True)
+    elif role_name == "admin":
+        if not current_user.company_id:
+            raise HTTPException(status_code=400, detail="Admin user is not assigned to any company")
+        total = get_user_count(db, company_id=current_user.company_id)
+        online = get_user_count(db, company_id=current_user.company_id, online_only=True)
+    else:
+        raise HTTPException(status_code=403, detail="Access forbidden")
+
+    return {"total_users": total, "online_users": online}
