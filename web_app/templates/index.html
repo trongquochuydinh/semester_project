@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="row" id="dashboard-row">
-  {% if session['user']['role'] == 'superadmin' or session['user']['role'] == 'admin' %}
+  {% if role == 'superadmin' or role == 'admin' %}
     <div id="users-table"></div>
-    {% if session['user']['role'] == 'superadmin' %}
+    {% if role == 'superadmin' %}
     <div id="companies-table"></div>
     {% endif %}
   {% endif %}

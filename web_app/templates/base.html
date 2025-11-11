@@ -56,29 +56,29 @@
                         </a>
                     </li>
 
-                    {% if session['user']['role'] == 'superadmin' or session['user']['role'] == 'admin' %}
+                    {% if role == 'superadmin' or role == 'admin' %}
                     <li class="pc-item pc-caption">
                         <label>Management</label>
                         <i class="ti ti-dashboard"></i>
                     </li>
                     {% endif %}
 
-                    {% if session['user']['role'] == 'superadmin' %}
+                    {% if role == 'superadmin' %}
                     <li class="pc-item">
-                        <a href="/user_management" class="pc-link">
+                        <a href="/users/management" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-user"></i></span>
                             <span class="pc-mtext">Admins</span>
                         </a>
                     </li>
                     <li class="pc-item">
-                        <a href="/company_management" class="pc-link">
+                        <a href="/companies/management" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-building"></i></span>
                             <span class="pc-mtext">Companies</span>
                         </a>
                     </li>
-                    {% elif session['user']['role'] == 'admin' %}
+                    {% elif role == 'admin' %}
                     <li class="pc-item">
-                        <a href="/user_management" class="pc-link">
+                        <a href="/users/management" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-user"></i></span>
                             <span class="pc-mtext">Company users</span>
                         </a>
@@ -209,7 +209,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                         <h6 class="mb-1">{{ session["user"]["username"] }}</h6>
-                        <span>{{ session["user"]["role"] }}</span>
+                        <span>{{ role }}</span>
                         </div>
                         <a href="#!" class="pc-head-link bg-transparent"><i class="ti ti-power text-danger"></i></a>
                     </div>

@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Fetch roles
   try {
-    const res = await fetch("/get_roles");
+    const res = await fetch("/users/get_subroles");
     if (!res.ok) throw new Error("Failed to fetch roles");
     const data = await res.json(); // matches your FastAPI RolesResponse
     data.roles.forEach(role => {
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-      const res = await fetch("/create_user", {
+      const res = await fetch("/users/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
