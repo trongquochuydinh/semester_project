@@ -14,19 +14,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 body: JSON.stringify(payload),
             });
 
-            if (!res.ok) throw new Error("Failed to create company");
-
             const result = await res.json();
 
-            if (result.success) {
-                alert("New company was successfully created.")
+            if (res.ok) {
+                alert(result.message || "Company created successfully!");
             } else {
-                alert("Failed: " + (result.message || "Unknown error"));
+                alert("Failed: " + (result.error || result.message || "Unknown error"));
             }
-            } catch (err) {
+
+        } catch (err) {
             console.error("Error creating company:", err);
             alert("Error creating company");
         }
     });
 });
-

@@ -5,6 +5,9 @@ CREATE TABLE companies (
     field TEXT
 );
 
+INSERT INTO companies (name, field)
+VALUES ('TechNova', 'Software Development');
+
 -- Users
 -- company_id is NULL for superadmins (global users)
 CREATE TABLE users (
@@ -64,7 +67,7 @@ INSERT INTO roles (name) VALUES ('admin');
 INSERT INTO roles (name) VALUES ('manager');
 INSERT INTO roles (name) VALUES ('employee');
 
--- Insert a superadmin user with password 'superadmin123'
+-- Insert a superadmin user with password 'superadmin'
 INSERT INTO users (username, email, password_hash, company_id) VALUES (
     'superadmin',
     'superadmin@example.com',
@@ -72,5 +75,29 @@ INSERT INTO users (username, email, password_hash, company_id) VALUES (
     NULL
 );
 
+INSERT INTO users (username, email, password_hash, company_id) VALUES (
+    'admin',
+    'admin@technova.com',
+    'scrypt:32768:8:1$LAYR5AP8fD3IzoXE$e01c29446bc30a71d6436957af1f040349bfeee2d5bd3ead05fff29184c0bf82ee0846af695af2e9941bce4b20eb84f5a2dbb88271c167e6f2ba4180a1a1f75f',
+    1
+);
+
+INSERT INTO users (username, email, password_hash, company_id) VALUES (
+    'manager',
+    'manager@technova.com',
+    'scrypt:32768:8:1$YhN1PkULDrlbixbX$3c01b8e19795cd749392d3d6cf6b96e96495ca4e114cbe306ebc4369ccdbf88c618564698c324cd2146e927cdd32cc4e2d52f2941ef10edececc9d6381550d9a',
+    1
+);
+
+INSERT INTO users (username, email, password_hash, company_id) VALUES (
+    'employee',
+    'employee@technova.com',
+    'scrypt:32768:8:1$DsZHzDPxZbEYOg1b$a9aa837ce7b598eba46310616d8fc87ec0f91a40d28607e31fd48492e891fba4ad4a863288c6b90169f7de75159f683c90187c20a28a65bb48e1d441d9e411d5',
+    1
+);
+
 -- Assign superadmin role to the superadmin user (assuming role id 1 is 'superadmin')
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
+INSERT INTO user_roles (user_id, role_id) VALUES (2, 2);
+INSERT INTO user_roles (user_id, role_id) VALUES (3, 3);
+INSERT INTO user_roles (user_id, role_id) VALUES (4, 4);
