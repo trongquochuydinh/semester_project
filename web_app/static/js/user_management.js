@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Fetch companies
   try {
-    const res = await fetch("/get_companies");
+    const res = await fetch("/companies/get");
     if (!res.ok) throw new Error("Failed to fetch companies");
     const companies = await res.json();
     companies.forEach(company => {
