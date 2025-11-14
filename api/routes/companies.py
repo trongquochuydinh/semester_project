@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from typing import List, Optional
-from api.db.db_engine import SessionLocal
+from typing import List
+
+from requests import Session
+from api.db.db_engine import SessionLocal, get_db
 from api.models.company import Company
+from api.schemas.company_schema import CompanyCreate
+
+from api.services import create_company
 
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
@@ -18,3 +23,7 @@ def get_companies():
         return [CompanyResponse(id=company.id, name=company.name) for company in companies]
     finally:
         session.close()
+
+@router.post("/create")
+def create_company_endpoint(data: CompanyCreate, db: Session = Depends(get_db)):
+    return create_company(data, db)
