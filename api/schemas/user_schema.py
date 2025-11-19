@@ -10,6 +10,7 @@ class UserResponse(BaseModel):
     username: str
     access_token: str
     token_type: str
+    role: str
 
 class UserCreate(BaseModel):
     username: str

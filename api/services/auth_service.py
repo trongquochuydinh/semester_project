@@ -62,6 +62,7 @@ def login_user(identifier: str, password: str, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "id": user.id,
         "username": user.username,
+        "role": role_name
     }
 
 def logout_user(user_id: int, db: Session):
