@@ -43,7 +43,8 @@ export function createFormModal({
         </div>
       `).join("")}
     </form>
-    <div id="${id}-result" class="mt-3" style="display:none"></div>
+
+    <div id="${id}-result" class="alert alert-info mt-3" style="display:none"></div>
   `;
 
   const footerHtml = `
@@ -57,7 +58,18 @@ export function createFormModal({
 
   modalEl.addEventListener("shown.bs.modal", () => onLoad());
 
+  // Helper for writing to result box
+  function writeResult(html) {
+    const box = document.getElementById(`${id}-result`);
+    if (box) {
+      box.innerHTML = html;
+      box.style.display = "block";
+    }
+  }
+
   document.addEventListener("click", (e) => {
-    if (e.target.id === `${id}-submit-btn`) onSubmit();
+    if (e.target.id === `${id}-submit-btn`) {
+      onSubmit(writeResult);   // pass callback
+    }
   });
 }

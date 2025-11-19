@@ -22,5 +22,6 @@ def inject_globals():
     return dict(
         t=lambda key: translator.t(key),
         role=g.role,
-        lang=g.lang
+        lang=g.lang,
+        company_id=g.company_id,
     )
