@@ -3,23 +3,33 @@
 {% block title %}Home | Warehouse{% endblock %}
 
 {% block content %}
+<div id="page-data"
+     data-role="{{ role }}"
+     data-company-id="{{ company_id if company_id else '' }}">
+</div>
+
 <div class="row" id="dashboard-row">
+
   {% if role == 'superadmin' or role == 'admin' %}
     <div id="users-table"></div>
+
     {% if role == 'superadmin' %}
       <div id="companies-table"></div>
       <div id="stats-container"></div>
     {% endif %}
+
   {% endif %}
+
 </div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Page Specific JS -->
 <script src="{{ url_for('static', filename='js/plugins/apexcharts.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/elements/card.js') }}"></script>
-<script src="{{ url_for('static', filename='js/elements/table.js') }}"></script>
-<script src="{{ url_for('static', filename='js/elements/bar-chart.js') }}"></script>
-<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 
+<!-- CORE components -->
+<script type="module" src="{{ url_for('static', filename='js/elements/card.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/elements/table.js') }}"></script>
+
+<!-- PAGE LOGIC -->
+<script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}
