@@ -11,7 +11,6 @@ def paginate_proxy():
     """Handle pagination requests for users, companies, etc."""
     try:
         data = request.get_json() or {}
-        data.setdefault("filters", {})
 
         res = api_post("/api/paginate", data)
         return (res.text, res.status_code, res.headers.items())

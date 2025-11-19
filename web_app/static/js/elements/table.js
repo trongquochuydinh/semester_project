@@ -11,11 +11,34 @@ function createTableCard({ title, columns, rows }) {
   col.className = "col-md-12 col-xl-8";
 
   const headerHtml = columns.map(col => `<th>${col.label}</th>`).join("");
-  const rowsHtml = rows.map(row => `
-    <tr>
-      ${columns.map(col => `<td>${row[col.key] ?? "—"}</td>`).join("")}
-    </tr>
-  `).join("");
+  const rowsHtml = rows.map(row => {
+    const cells = columns.map(col => {
+
+      if (col.key === "actions") {
+        return `
+          <td class="text-end">
+
+            <button class="btn btn-sm btn-outline-primary me-2"
+                    data-action="edit-user"
+                    data-user-id="${row.id}">
+              Edit
+            </button>
+
+            <button class="btn btn-sm btn-outline-danger"
+                    data-action="delete-user"
+                    data-user-id="${row.id}">
+              Delete
+            </button>
+
+          </td>
+        `;
+      }
+
+      return `<td>${row[col.key] ?? "—"}</td>`;
+    }).join("");
+
+    return `<tr>${cells}</tr>`;
+  }).join("");
 
   col.innerHTML = `
     <h5 class="mb-3">${title}</h5>
@@ -38,7 +61,7 @@ function createTableCard({ title, columns, rows }) {
   return col;
 }
 
-function createUsersTableCard({ title, rows }) {
+function createUsersTableCardBase({ title, rows }) {
   const columns = [
     { key: "id", label: "ID" },
     { key: "username", label: "Username" },
@@ -46,7 +69,52 @@ function createUsersTableCard({ title, rows }) {
     { key: "role_name", label: "Role" },
     { key: "company_name", label: "Company" }
   ];
+
   return createTableCard({ title, columns, rows });
+}
+
+function createUsersTableCardManage({ title, rows }) {
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "username", label: "Username" },
+    { key: "email", label: "Email" },
+    { key: "status", label: "Status" },
+    { key: "role_name", label: "Role" },
+    { key: "company_name", label: "Company" },
+    { key: "actions", label: "Actions" }
+  ];
+  const col = createTableCard({ title, columns, rows });
+
+  // Find the <h5> title
+  const titleEl = col.querySelector("h5");
+  if (!titleEl) return col;
+
+  // Create the wrapper
+  const wrapper = document.createElement("div");
+  wrapper.className = "d-flex justify-content-between align-items-center mb-3";
+
+  // Create the new title element (Bootstrap-friendly)
+  const newTitle = document.createElement("h5");
+  newTitle.className = "mb-0";   // no margin bottom because wrapper adds spacing
+  newTitle.textContent = title;
+
+  // Create the Create Admin button
+  const btn = document.createElement("button");
+  btn.className = "btn btn-primary btn-sm";
+  btn.textContent = "Create User";
+  btn.addEventListener("click", () => {
+    const modalEl = document.getElementById("createUserModal");
+    new bootstrap.Modal(modalEl).show();
+  });
+
+  // Build wrapper: [Title]    [Button]
+  wrapper.appendChild(newTitle);
+  wrapper.appendChild(btn);
+
+  // Replace the original <h5> tag with the new wrapper
+  titleEl.replaceWith(wrapper);
+
+  return col;
 }
 
 function createCompaniesTableCard({ title, rows }) {
@@ -79,3 +147,20 @@ function createOrdersTableCard({ title, rows }) {
   ];
   return createTableCard({ title, columns, rows });
 }
+
+document.addEventListener("click", async (e) => {
+
+  // --- EDIT user ---
+  if (e.target.matches("[data-action='edit-user']")) {
+    const userId = e.target.dataset.userId;
+    console.log("Edit user:", userId);
+    showEditUserModal(userId);  // <- you will create this
+  }
+
+  // --- DELETE user ---
+  if (e.target.matches("[data-action='delete-user']")) {
+    const userId = e.target.dataset.userId;
+    console.log("Delete user:", userId);
+    showDeleteUserModal(userId); // <- also create
+  }
+});

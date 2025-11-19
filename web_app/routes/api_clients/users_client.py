@@ -14,8 +14,10 @@ def send_login_request(identifier, password):
         session["user"] = {
             "id": user_data["id"],
             "username": user_data["username"],
+            "role": user_data["role"]
         }
         session["token"] = user_data["access_token"]
+        session["role"] = user_data["role"]
 
         return jsonify({"success": True, "user": session["user"]})
 
