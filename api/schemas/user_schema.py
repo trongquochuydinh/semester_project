@@ -10,6 +10,8 @@ class UserResponse(BaseModel):
     username: str
     access_token: str
     token_type: str
+    role: str
+    company_id: Optional[int] = None
 
 class UserCreate(BaseModel):
     username: str

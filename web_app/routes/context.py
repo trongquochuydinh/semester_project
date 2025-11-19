@@ -12,11 +12,8 @@ def load_global_context():
     g.lang = session.get("lang", "en")
     translator.set_language(g.lang)
 
-    # --- Role setup
-    g.role = None
-    token = session.get("token")
-    if token:
-        g.role = get_role()
+    g.role = session.get("role")
+    g.company_id = session.get("company_id")
 
 
 @context_bp.app_context_processor

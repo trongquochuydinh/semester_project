@@ -1,97 +1,48 @@
+import { createTable } from "./elements/table.js";
+import { USERS_SCHEMA_MANAGE } from "./schemas/schema_users.js";
+import { registerAction } from "./elements/action.js";
+import { createFormModal } from "./elements/modal.js";
+import { CREATE_USER_MODAL } from "./modals/modal_user_create.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
-  const roleSelect = document.getElementById("role");
-  const companySelect = document.getElementById("company");
-  
-  // Get current user information
-  let currentUser = null;
-  try {
-    const res = await fetch("/get_current_user");
-    if (res.ok) {
-      currentUser = await res.json();
-    }
-  } catch (err) {
-    console.error("Error getting current user:", err);
-  }
+    createFormModal(CREATE_USER_MODAL);
 
-  // Fetch roles
-  try {
-    const res = await fetch("/users/get_subroles");
-    if (!res.ok) throw new Error("Failed to fetch roles");
-    const data = await res.json(); // matches your FastAPI RolesResponse
-    data.roles.forEach(role => {
-      const option = document.createElement("option");
-      option.value = role.id;
-      option.textContent = role.name;
-      roleSelect.appendChild(option);
+    // register action so clicking the schema button opens modal
+    registerAction("open-create-user-modal", () => {
+      const modalEl = document.getElementById("createUserModal");
+      new bootstrap.Modal(modalEl).show();
     });
-  } catch (err) {
-    console.error("Error loading roles:", err);
-  }
 
-  // Fetch companies
-  try {
-    const res = await fetch("/companies/get");
-    if (!res.ok) throw new Error("Failed to fetch companies");
-    const companies = await res.json();
-    companies.forEach(company => {
-      const option = document.createElement("option");
-      option.value = company.id;
-      option.textContent = company.name;
-      companySelect.appendChild(option);
-    });
-    
-    // Handle company select based on current user role
-    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'manager')) {
-      // Disable company select and set to current user's company
-      companySelect.disabled = true;
-      if (currentUser.company_id) {
-        companySelect.value = currentUser.company_id;
-      }
-    }
-  } catch (err) {
-    console.error("Error loading companies:", err);
-  }
+    const user_container = document.getElementById("users-table");
 
-  // Handle form submission
-  document.getElementById("create-user-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const payload = {
-      username: document.getElementById("username").value,
-      email: document.getElementById("email").value,
-      role_id: parseInt(roleSelect.value, 10),
-      company_id: parseInt(companySelect.value, 10),
-    };
-
-    // If company select is disabled and user is admin/manager, use their company_id
-    if (companySelect.disabled && currentUser && currentUser.company_id) {
-      payload.company_id = currentUser.company_id;
-    }
-
-    try {
-      const res = await fetch("/users/create", {
+    if (user_container) {
+      const resUsers = await fetch("/paginate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ table_name: "users", limit: 5, offset: 0, filters: {} })
       });
 
-      if (!res.ok) throw new Error("Failed to create user");
+      const users = await resUsers.json();
+      createTable({
+        title: "Users",
+        element: user_container,
+        schema: USERS_SCHEMA_MANAGE,
+        rows: users.data,
+          actions: (row) => `
+            <button 
+              class="btn btn-sm btn-outline-primary"
+              data-action="edit-user" 
+              data-id="${row.id}">
+              Edit
+            </button>
 
-      const result = await res.json();
-
-      if (result.success) {
-        // Show password div
-        const pwDiv = document.getElementById("password-display");
-        const pwInput = document.getElementById("generated-password");
-        pwInput.value = result.initial_password || "(not provided)";
-        pwDiv.style.display = "block";
-        alert("New admin was successfully created.")
-      } else {
-        alert("Failed: " + (result.message || "Unknown error"));
-      }
-    } catch (err) {
-      console.error("Error creating user:", err);
-      alert("Error creating user");
+            <button 
+              class="btn btn-sm btn-outline-danger ms-2"
+              data-action="delete-user" 
+              data-id="${row.id}">
+              Delete
+            </button>
+          `
+      });
     }
-  });
 });

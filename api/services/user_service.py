@@ -145,6 +145,7 @@ def paginate_users(
     def to_dict(obj):
         d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
         d.pop("password_hash", None)
+        d["status"] = obj.status
         d["role_name"] = obj.roles[0].role.name if obj.roles and obj.roles[0].role else None
         d["company_name"] = obj.company.name if hasattr(obj, "company") and obj.company else None
         return d
