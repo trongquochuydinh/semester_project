@@ -306,6 +306,10 @@
     <script src="{{ url_for('static', filename='js/fonts/custom-font.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pcoded.js') }}"></script>
     <script src="{{ url_for('static', filename='js/plugins/feather.min.js') }}"></script>
+    
+    <script id="js-translations" type="application/json">
+        {{ js_translations | tojson }}
+    </script>
 
     {% block extra_scripts %}
     <script>layout_change('light');</script>

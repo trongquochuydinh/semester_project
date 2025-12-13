@@ -24,4 +24,5 @@ def inject_globals():
         role=g.role,
         lang=g.lang,
         company_id=g.company_id,
+        js_translations=translator.translations
     )
