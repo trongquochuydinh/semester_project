@@ -10,7 +10,7 @@
 
 <div class="row" id="dashboard-row">
 
-  {% if role == 'superadmin' or role == 'admin' %}
+  {% if role == 'superadmin' or role == 'admin' or role == 'manager' %}
     <div id="users-table"></div>
 
     {% if role == 'superadmin' %}

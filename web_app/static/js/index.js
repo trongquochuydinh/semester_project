@@ -1,4 +1,5 @@
 import { createTable } from "./elements/table.js";
+import { t } from "./utils.js";
 import { USERS_SCHEMA_MANAGE, USERS_SCHEMA_ONLINE_VIEW } from "./schemas/schema_users.js";
 import { COMPANIES_SCHEMA_VIEW } from "./schemas/schema_companies.js";
 
@@ -42,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // show online user table
     createTable({
-      title: "Online Users",
+      title: t("Online Users"),
       element: user_container,
       schema: USERS_SCHEMA_ONLINE_VIEW,
       rows: users.data,

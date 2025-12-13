@@ -1,4 +1,3 @@
-import os
 from flask import Flask, session, request, redirect
 from config import SECRET_KEY
 

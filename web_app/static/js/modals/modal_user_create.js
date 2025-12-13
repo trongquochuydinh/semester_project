@@ -14,7 +14,7 @@ export const CREATE_USER_MODAL = {
     await loadCompanies();
   },
 
-  onSubmit: async () => {
+  onSubmit: async (writeResult) => {
     const payload = {
       username: document.getElementById("username").value,
       email: document.getElementById("email").value,
@@ -30,18 +30,29 @@ export const CREATE_USER_MODAL = {
       });
 
       const data = await res.json();
+      console.log("Backend response:", data); // 🔍 Helpful for debugging
 
       if (!res.ok || !data.success) {
-        alert(data.message || "Failed to create user");
+        writeResult(`
+          <div class="text-danger">${data.message || "Failed to create user"}</div>
+        `);
         return;
       }
 
-      alert("User created");
+      // ⭐ Display initial password inside modal
+      writeResult(`
+        <div class="alert alert-success">
+          <b>User created successfully!</b><br>
+          <b>Password:</b> <code>${data.initial_password ?? "(none returned)"}</code>
+        </div>
+      `);
+
     } catch (err) {
       console.error("Create user error:", err);
-      alert("Unexpected error");
+      writeResult(`<div class="text-danger">Unexpected error occurred.</div>`);
     }
   }
+
 };
 
 export async function loadRoles() {
