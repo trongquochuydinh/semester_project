@@ -1,4 +1,6 @@
 import os
+import secrets
+import string
 import jwt
 from datetime import datetime, timedelta
 from fastapi import HTTPException
@@ -21,3 +23,7 @@ def decode_access_token(token: str):
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+def generate_password(length=10):
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))

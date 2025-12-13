@@ -1,81 +1,21 @@
-import secrets
-import string
-from typing import Dict
-from fastapi import Depends, HTTPException
-from requests import Session
-from sqlalchemy.orm import Session, joinedload
+from fastapi import HTTPException
 from werkzeug.security import generate_password_hash
 
-from api.db.db_engine import SessionLocal, get_db
-from api.models.user import User, UserRole, Role
+from api.db.user_db import (
+    insert_user,
+    get_role_by_id,
+    assign_role,
+    get_user_by_identifier as db_get_user,
+    paginate_users as db_paginate_users,
+    count_users as db_count_users,
+)
+from api.models.user import User
+from api.utils.auth_utils import generate_password
 
-def get_subroles_for_role(creator_role: str, db: Session = Depends(get_db)):
-    try:
-        roles = db.query(Role).all()
-        role_map = {
-            "superadmin": {"admin"},
-            "admin": {"manager", "employee"},
-            "manager": {"employee"},
-        }
-        allowed = role_map.get(creator_role.lower(), set())
-        return [r for r in roles if r.name.lower() in allowed]
-    finally:
-        db.close()
-
-
-def create_user_account(data, db: Session = Depends(get_db)):
-    try:
-        alphabet = string.ascii_letters + string.digits
-        initial_password = "".join(secrets.choice(alphabet) for _ in range(10))
-        password_hash = generate_password_hash(initial_password)
-
-        user = User(
-            username=data.username,
-            email=data.email,
-            company_id=data.company_id,
-            password_hash=password_hash,
-            status="offline",
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        role = db.query(Role).filter_by(id=data.role_id).first()
-        if not role:
-            raise HTTPException(status_code=400, detail="Role not found")
-
-        db.add(UserRole(user_id=user.id, role_id=role.id))
-        db.commit()
-        return {"message": "User created successfully", "initial_password": initial_password}
-    finally:
-        db.close()
-
-def get_user_by_username_or_email(identifier: str, db: Session):
-    return (
-        db.query(User)
-        .options(joinedload(User.roles).joinedload(UserRole.role))
-        .filter((User.username == identifier) | (User.email == identifier))
-        .first()
-    )
-
-def verify_user(identifier: str, password: str, db: Session):
-    user = get_user_by_username_or_email(identifier, db)
-    if user and user.verify_password(password):
-        return user
-    return None
-
-def create_user_account(data, db: Session):
-    """
-    Creates a new user account and assigns a role.
-    A random initial password is generated automatically.
-    """
-
-    # Generate a secure random initial password
-    alphabet = string.ascii_letters + string.digits
-    initial_password = "".join(secrets.choice(alphabet) for _ in range(10))
+def create_user_account(data, db):
+    initial_password = generate_password()
     password_hash = generate_password_hash(initial_password)
 
-    # Create new user
     user = User(
         username=data.username,
         email=data.email,
@@ -83,17 +23,14 @@ def create_user_account(data, db: Session):
         password_hash=password_hash,
         status="offline",
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
 
-    # Validate and assign role
-    role = db.query(Role).filter_by(id=data.role_id).first()
+    user = insert_user(db, user)
+
+    role = get_role_by_id(db, data.role_id)
     if not role:
-        raise HTTPException(status_code=400, detail="Role not found")
+        raise HTTPException(400, "Role not found")
 
-    db.add(UserRole(user_id=user.id, role_id=role.id))
-    db.commit()
+    assign_role(db, user.id, role.id)
 
     return {
         "message": "User created successfully",
@@ -103,67 +40,35 @@ def create_user_account(data, db: Session):
         "email": user.email,
     }
 
-def paginate_users(
-    db: Session,
-    limit: int,
-    offset: int,
-    filters: Dict,
-    user_role: str,
-    company_id: int
-):
-    hierarchy = {
-        "superadmin": ["admin"],
-        "admin": ["manager", "employee"],
-        "manager": ["employee"],
-        "employee": []
+def verify_user(identifier: str, password: str, db):
+    user = db_get_user(db, identifier)
+    if user and user.verify_password(password):
+        return user
+    return None
+
+
+def get_subroles_for_role(role_name: str):
+    role_map = {
+        "superadmin": {"admin"},
+        "admin": {"manager", "employee"},
+        "manager": {"employee"},
     }
-    allowed_roles = hierarchy.get(user_role, None)
+    return role_map.get(role_name.lower(), set())
 
-    query = (
-        db.query(User)
-        .options(joinedload(User.roles).joinedload(UserRole.role), joinedload(User.company))
-    )
 
-    # Apply filters
-    for key, value in filters.items():
-        if hasattr(User, key):
-            query = query.filter(getattr(User, key) == value)
+def paginate_users(db, limit, offset, filters, user_role, company_id):
+    allowed_roles = get_subroles_for_role(user_role)
+    total, results = db_paginate_users(db, filters, allowed_roles, company_id, limit, offset)
 
-    # Role-based filtering
-    if allowed_roles:
-        query = query.join(UserRole).join(Role).filter(Role.name.in_(allowed_roles))
-    elif allowed_roles == []:
-        query = query.filter(False)
-
-    # Company restriction
-    if company_id is not None:
-        query = query.filter(User.company_id == company_id)
-
-    total = query.count()
-    results = query.offset(offset).limit(limit).all()
-
-    def to_dict(obj):
-        d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+    def serialize(u: User):
+        d = {c.name: getattr(u, c.name) for c in u.__table__.columns}
         d.pop("password_hash", None)
-        d["status"] = obj.status
-        d["role_name"] = obj.roles[0].role.name if obj.roles and obj.roles[0].role else None
-        d["company_name"] = obj.company.name if hasattr(obj, "company") and obj.company else None
+        d["role_name"] = u.roles[0].role.name if u.roles else None
+        d["company_name"] = u.company.name if u.company else None
         return d
 
-    return {"total": total, "data": [to_dict(r) for r in results]}
+    return {"total": total, "data": [serialize(r) for r in results]}
 
-def get_user_count(db: Session, company_id: int = None, online_only: bool = False):
-    """
-    Returns a user count.
-    If company_id is given, filters only that company.
-    If online_only=True, filters only users with status='online'.
-    """
-    query = db.query(User)
 
-    if company_id is not None:
-        query = query.filter(User.company_id == company_id)
-
-    if online_only:
-        query = query.filter(User.status == "online")
-
-    return query.count()
+def get_user_count(db, company_id=None, online_only=False):
+    return db_count_users(db, company_id, online_only)
