@@ -12,6 +12,8 @@ def insert_user(db: Session, user: User) -> User:
 def get_role_by_id(db: Session, role_id: int):
     return db.query(Role).filter_by(id=role_id).first()
 
+def get_all_roles(db: Session):
+    return db.query(Role).all()
 
 def assign_role(db: Session, user_id: int, role_id: int):
     db.add(UserRole(user_id=user_id, role_id=role_id))

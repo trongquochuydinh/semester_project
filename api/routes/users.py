@@ -20,8 +20,8 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/get_subroles", response_model=RolesResponse)
 def get_subroles(creator_role: str = Query(...), db: Session = Depends(get_db)):
-    roles = get_subroles_for_role(creator_role, db)
-    return RolesResponse(roles=[RoleOut(id=r.id, name=r.name) for r in roles])
+    roles = get_subroles_for_role(creator_role)
+    return RolesResponse(roles=[RoleOut(name=name) for name in roles])
 
 @router.post("/create")
 def create_user_endpoint(data: UserCreate, db: Session = Depends(get_db)):

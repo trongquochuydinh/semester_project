@@ -20,7 +20,6 @@ class UserCreate(BaseModel):
     role_id: int
 
 class RoleOut(BaseModel):
-    id: int
     name: str
 
 class RolesResponse(BaseModel):
