@@ -37,7 +37,7 @@ export async function loadCompanies(container) {
   companySelect.innerHTML = "";
 
   try {
-    const companies = await apiFetch("/companies/get");
+    const companies = await apiFetch("/companies/get_companies");
 
     companies.forEach(c => {
       const opt = document.createElement("option");

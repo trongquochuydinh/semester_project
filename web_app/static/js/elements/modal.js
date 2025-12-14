@@ -56,7 +56,11 @@ export function createFormModal({
 
   const modalEl = document.getElementById(id);
 
-  modalEl.addEventListener("shown.bs.modal", () => onLoad());
+  modalEl.addEventListener("shown.bs.modal", () => {
+    if (typeof onLoad === "function") {
+      onLoad();
+    }
+  });
 
   // Helper for writing to result box
   function writeResult(html) {

@@ -45,6 +45,14 @@ def get_subroles():
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
 
+def get_my_data():
+    try:
+        res = api_get("/api/users/me")
+
+        return res.json()
+        
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code
 
 def get_role():
     """Fetch the user's role via FastAPI using stored JWT."""

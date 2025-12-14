@@ -32,8 +32,7 @@ def logout(data: LogoutRequest, db: Session = Depends(get_db)):
     return logout_user(data.user_id, db)
 
 @router.get("/me")
-def get_me(token=Depends(security), db: Session = Depends(get_db)):
-    current_user = get_current_user(token, db)
+def get_me(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "username": current_user.username,

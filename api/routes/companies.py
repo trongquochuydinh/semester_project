@@ -7,7 +7,7 @@ from api.db.db_engine import SessionLocal, get_db
 from api.models.company import Company
 from api.schemas.company_schema import CompanyCreate
 
-from api.services import create_company
+from api.services import create_company, get_info_of_company
 
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
@@ -27,3 +27,7 @@ def get_companies():
 @router.post("/create")
 def create_company_endpoint(data: CompanyCreate, db: Session = Depends(get_db)):
     return create_company(data, db)
+
+@router.get("/get/{company_id}")
+def get_company(company_id, db: Session = Depends(get_db)):
+    return get_info_of_company(company_id, db)

@@ -18,3 +18,11 @@ def create_company(data):
         return (res.text, res.status_code, res.headers.items())
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
+    
+def get_company(company_id):
+    try:
+        res = api_get(f"/api/companies/get/{company_id}")
+        return res.json()
+    except APIClientError as e:
+        # graceful fallback — network or backend error
+        return jsonify({"error": e.message}), e.status_code
