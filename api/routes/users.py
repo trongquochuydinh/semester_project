@@ -8,7 +8,7 @@ from api.schemas.user_schema import (
     LoginRequest, UserResponse, UserCreate, RolesResponse, LogoutRequest, RoleOut
 )
 from api.services import (
-    login_user, get_subroles_for_role, create_user_account, logout_user, get_current_user, require_role, get_user_count
+    login_user, get_subroles_for_role, create_user_account, logout_user, get_current_user, require_role, get_user_count, get_info_of_user
 )
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -40,6 +40,10 @@ def get_me(token=Depends(security), db: Session = Depends(get_db)):
         "email": current_user.email,
         "role": current_user.roles[0].role.name if current_user.roles else None,
     }
+
+@router.get("/get/{user_id}")
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    return get_info_of_user(user_id, db)
 
 @router.get("/get_my_role")
 def get_my_role(token=Depends(security), db: Session = Depends(get_db)):

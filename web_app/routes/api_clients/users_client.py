@@ -96,6 +96,15 @@ def logout_user():
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
 
+def get_user(user_id):
+    """Get user details via API."""
+    try:
+        res = api_get(f"/api/users/get/{user_id}")
+        return res.json()
+
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code
+
 def get_user_count():
     """Get total user count via API."""
     try:

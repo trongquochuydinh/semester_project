@@ -15,6 +15,14 @@ def get_role_by_id(db: Session, role_id: int):
 def get_all_roles(db: Session):
     return db.query(Role).all()
 
+def get_user_data_by_id(db: Session, user_id: int) -> User:
+    return (
+        db.query(User)
+        .options(joinedload(User.roles).joinedload(UserRole.role))
+        .filter(User.id == user_id)
+        .first()
+    )
+
 def assign_role(db: Session, user_id: int, role_id: int):
     db.add(UserRole(user_id=user_id, role_id=role_id))
     db.commit()

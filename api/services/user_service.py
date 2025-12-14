@@ -8,6 +8,7 @@ from api.db.user_db import (
     get_user_by_identifier as db_get_user,
     paginate_users as db_paginate_users,
     count_users as db_count_users,
+    get_user_data_by_id as db_get_user_data_by_id
 )
 from api.models.user import User
 from api.utils.auth_utils import generate_password
@@ -46,6 +47,23 @@ def verify_user(identifier: str, password: str, db):
         return user
     return None
 
+def get_info_of_user(user_id: int, db):
+    user = db_get_user_data_by_id(db, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    
+    # Transform the user object to include the IDs needed for form population
+    user_dict = {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "company_id": user.company_id,
+        
+        # Extract role_id from the relationship
+        "role": get_role_by_id(db, user.roles[0].role_id).name if user.roles else None,
+    }
+    
+    return user_dict
 
 def get_subroles_for_role(role_name: str):
     role_map = {

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template
 from web_app.routes.api_clients.utils import login_required, token_required
-from web_app.routes.api_clients.users_client import create_user as proxy_create_user, get_role as proxy_get_role, get_subroles as proxy_get_subroles, get_user_count as proxy_get_user_count
+from web_app.routes.api_clients.users_client import create_user as proxy_create_user, get_role as proxy_get_role, get_subroles as proxy_get_subroles, get_user_count as proxy_get_user_count, get_user as proxy_get_user
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -29,6 +29,11 @@ def get_subroles():
 @token_required
 def get_user_count():
     return proxy_get_user_count()
+
+@users_bp.route("/get/<int:user_id>")
+@token_required
+def get_user(user_id):
+    return proxy_get_user(user_id)
 
 # for frontend template rendering, check "user" in session
 # for calls to API endpoints, check "token" in session
