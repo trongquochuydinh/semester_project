@@ -1,5 +1,6 @@
-from flask import Flask, session, request, redirect
+from flask import Flask, jsonify, session, request, redirect, url_for
 from config import SECRET_KEY
+from web_app.routes.api_clients.utils import APIUnauthorizedError
 
 app = Flask(__name__)
 app.config.update(
@@ -8,6 +9,13 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=False
 )
+
+@app.errorhandler(APIUnauthorizedError)
+def handle_api_unauthorized(e):
+    if request.is_json:
+        return jsonify({"error": "Session expired"}), 401
+
+    return redirect(url_for("auth.home"))
 
 @app.route('/set_language')
 def set_language():

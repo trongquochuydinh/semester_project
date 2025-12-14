@@ -1,3 +1,5 @@
+import { apiFetch } from "../utils.js";
+
 export const BASE_USER_MODAL = {
   fields: [
     { label: "Username", html: `<input id="username" class="form-control">` },
@@ -11,35 +13,40 @@ export async function loadRoles(container) {
   const roleSelect = container.querySelector("#role");
   if (!roleSelect) return;
 
-  // Remove this problematic line:
-  // if (roleSelect.options.length > 0) return;
-
-  // Always clear and reload to ensure fresh options
   roleSelect.innerHTML = "";
 
-  const res = await fetch("/users/get_subroles");
-  const data = await res.json();
+  try {
+    const data = await apiFetch("/users/get_subroles");
 
-  data.roles.forEach(role => {
-    const opt = document.createElement("option");
-    opt.value = role.name;;
-    opt.textContent = role.name;
-    roleSelect.appendChild(opt);
-  });
+    data.roles.forEach(role => {
+      const opt = document.createElement("option");
+      opt.value = role.name;
+      opt.textContent = role.name;
+      roleSelect.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Failed to load roles:", err);
+  }
 }
+
 export async function loadCompanies(container) {
   const companySelect = container.querySelector("#company");
   if (!companySelect) return;
 
   companySelect.innerHTML = "";
 
-  const res = await fetch("/companies/get");
-  const companies = await res.json();
+  try {
+    const companies = await apiFetch("/companies/get");
 
-  companies.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    opt.textContent = c.name;
-    companySelect.appendChild(opt);
-  });
+    companies.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.name;
+      companySelect.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Failed to load companies:", err);
+  }
 }

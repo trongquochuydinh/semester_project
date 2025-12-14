@@ -4,6 +4,7 @@ import { registerAction } from "./elements/action.js";
 import { createFormModal } from "./elements/modal.js";
 import { CREATE_USER_MODAL } from "./modals/modal_user_create.js";
 import { EDIT_USER_MODAL } from "./modals/modal_user_edit.js";
+import { apiFetch } from "./utils.js";
 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -25,13 +26,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user_container = document.getElementById("users-table");
 
     if (user_container) {
-      const resUsers = await fetch("/paginate", {
+      const users = await apiFetch("/paginate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ table_name: "users", limit: 5, offset: 0, filters: {} })
       });
 
-      const users = await resUsers.json();
       createTable({
         title: "Users",
         element: user_container,

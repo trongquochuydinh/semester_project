@@ -1,6 +1,5 @@
 from flask import Blueprint, g, session
 from web_app.localization.localization import Translator
-from web_app.routes.api_clients.users_client import get_role
 
 context_bp = Blueprint("context", __name__)
 

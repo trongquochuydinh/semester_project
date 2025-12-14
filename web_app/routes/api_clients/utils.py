@@ -9,16 +9,34 @@ class APIClientError(Exception):
         self.status_code = status_code
         super().__init__(message)
 
+class APIUnauthorizedError(APIClientError):
+    pass
+
 def api_request(method, endpoint, data=None, params=None):
     url = f"{API_URL}{endpoint}"
     headers = {"Content-Type": "application/json"}
+
     token = session.get("token")
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
     try:
-        res = requests.request(method.upper(), url, json=data, params=params, headers=headers)
+        res = requests.request(
+            method.upper(),
+            url,
+            json=data,
+            params=params,
+            headers=headers,
+            timeout=5
+        )
 
+        if res.status_code == 401:
+            session.pop("token", None)
+            session.pop("user", None)
+
+            raise APIUnauthorizedError("Session expired", 401)
+
+        # Other errors
         if res.status_code >= 400:
             try:
                 detail = res.json().get("detail", res.text)
@@ -27,9 +45,11 @@ def api_request(method, endpoint, data=None, params=None):
             raise APIClientError(detail, res.status_code)
 
         return res
+    except APIUnauthorizedError:
+        raise
     except requests.RequestException as e:
         raise APIClientError(str(e), 502)
-    
+
 def api_get(endpoint, params=None):
     return api_request("get", endpoint, params=params)
 

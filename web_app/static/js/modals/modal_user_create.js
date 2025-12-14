@@ -1,4 +1,5 @@
 import { BASE_USER_MODAL, loadRoles, loadCompanies } from "./modal_user.js";
+import { apiFetch } from "../utils.js";
 
 export const CREATE_USER_MODAL = {
   id: "createUserModal",
@@ -22,16 +23,16 @@ export const CREATE_USER_MODAL = {
     };
 
     try {
-      const res = await fetch("/users/create", {
+      const data = await apiFetch("/users/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        writeResult(`<div class="text-danger">${data.message || "Failed to create user"}</div>`);
+      if (!data.success) {
+        writeResult(
+          `<div class="text-danger">${data.message || "Failed to create user"}</div>`
+        );
         return;
       }
 
@@ -44,7 +45,7 @@ export const CREATE_USER_MODAL = {
 
     } catch (err) {
       console.error(err);
-      writeResult(`<div class="text-danger">Unexpected error occurred.</div>`);
+      writeResult(`<div class="text-danger">${err.message || "Unexpected error occurred."}</div>`);
     }
   }
 };
