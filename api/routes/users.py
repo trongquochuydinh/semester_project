@@ -24,7 +24,7 @@ def get_subroles(creator_role: str = Query(...), db: Session = Depends(get_db)):
     return RolesResponse(roles=[RoleOut(name=name) for name in roles])
 
 @router.post("/create")
-def create_user_endpoint(data: UserCreate, db: Session = Depends(get_db)):
+def create_user_endpoint(data: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(require_role(["superadmin", "admin"]))):
     return create_user_account(data, db)
 
 @router.post("/logout")

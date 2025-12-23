@@ -40,7 +40,8 @@ def require_role(required_roles: List[str]):
         if role_name not in required_roles:
             raise HTTPException(status_code=403, detail="Access forbidden")
 
-        return current_user  # still return the user for use in route
+        return current_user  # important: pass user downstream
+
     return role_checker
 
 def login_user(identifier: str, password: str, db: Session = Depends(get_db)):
