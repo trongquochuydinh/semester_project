@@ -4,13 +4,14 @@ from api.models.user import User, UserRole, Role
 
 def insert_user(db: Session, user: User) -> User:
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    db.flush()      # assigns user.id
     return user
-
 
 def get_role_by_id(db: Session, role_id: int):
     return db.query(Role).filter_by(id=role_id).first()
+
+def get_id_by_role(db: Session, role):
+    return db.query(Role).filter(Role.name == role).first()
 
 def get_all_roles(db: Session):
     return db.query(Role).all()
@@ -25,8 +26,7 @@ def get_user_data_by_id(db: Session, user_id: int) -> User:
 
 def assign_role(db: Session, user_id: int, role_id: int):
     db.add(UserRole(user_id=user_id, role_id=role_id))
-    db.commit()
-
+    db.flush()
 
 def get_user_by_identifier(db: Session, identifier: str) -> User:
     return (

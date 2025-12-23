@@ -4,34 +4,38 @@ from werkzeug.security import generate_password_hash
 from api.db.user_db import (
     insert_user,
     get_role_by_id,
+    get_id_by_role,
     assign_role,
     get_user_by_identifier as db_get_user,
     paginate_users as db_paginate_users,
     count_users as db_count_users,
     get_user_data_by_id as db_get_user_data_by_id
 )
+from sqlalchemy.orm import Session
 from api.models.user import User
 from api.utils.auth_utils import generate_password
 
-def create_user_account(data, db):
-    initial_password = generate_password()
-    password_hash = generate_password_hash(initial_password)
+def create_user_account(data, db: Session):
+    with db.begin():
+        initial_password = generate_password()
+        password_hash = generate_password_hash(initial_password)
 
-    user = User(
-        username=data.username,
-        email=data.email,
-        company_id=data.company_id,
-        password_hash=password_hash,
-        status="offline",
-    )
+        user = User(
+            username=data.username,
+            email=data.email,
+            company_id=data.company_id,
+            password_hash=password_hash,
+            status="offline",
+        )
 
-    user = insert_user(db, user)
+        db.add(user)
+        db.flush()  # assigns user.id
 
-    role = get_role_by_id(db, data.role_id)
-    if not role:
-        raise HTTPException(400, "Role not found")
+        role = get_id_by_role(db, data.role)
+        if not role:
+            raise HTTPException(status_code=400, detail="Role not found")
 
-    assign_role(db, user.id, role.id)
+        assign_role(db, user.id, role.id)
 
     return {
         "message": "User created successfully",
