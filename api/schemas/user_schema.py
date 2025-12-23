@@ -17,7 +17,7 @@ class UserCreate(BaseModel):
     username: str
     email: str
     company_id: Optional[int] = None
-    role_id: int
+    role: str
 
 class RoleOut(BaseModel):
     name: str
