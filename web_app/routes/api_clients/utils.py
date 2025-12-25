@@ -1,7 +1,7 @@
 from flask import jsonify, session, render_template
 from functools import wraps
 import requests
-from config import API_URL
+from web_app.config import API_URL
 
 class APIClientError(Exception):
     def __init__(self, message, status_code=502):

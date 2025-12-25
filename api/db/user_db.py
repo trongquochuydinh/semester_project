@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from api.models.user import User, Role
 from datetime import datetime
-
 from typing import List
 
 def insert_user(db: Session, user: User) -> User:
