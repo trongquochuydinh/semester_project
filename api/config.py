@@ -5,5 +5,4 @@ dbname = os.environ.get('DB_NAME')
 user = os.environ.get('DB_USER')
 password = os.environ.get('DB_PASSWORD')
 
-API_URL = os.environ.get('API_URL')
-SECRET_KEY = os.environ.get('SECRET_KEY')
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-key")

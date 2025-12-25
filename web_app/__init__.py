@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, session, request, redirect, url_for
-from config import SECRET_KEY
+from web_app.config import FLASK_SECRET_KEY
 from web_app.routes.api_clients.utils import APIUnauthorizedError
 
 app = Flask(__name__)
 app.config.update(
-    SECRET_KEY=SECRET_KEY,
+    SECRET_KEY=FLASK_SECRET_KEY,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=False

@@ -1,7 +1,7 @@
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-from config import host, dbname, user, password
+from api.config import host, dbname, user, password
 
 if any(db_info is None for db_info in [host, dbname, user, password]):
     db_info = [("host", host), ("dbname", dbname),

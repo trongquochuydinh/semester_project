@@ -6,7 +6,7 @@ from api.services import verify_user
 from api.utils import create_access_token
 
 from api.schemas.user_schema import UserResponse
-from db.user_db import change_user_status
+from api.db.user_db import change_user_status
 
 def login_user(identifier: str, password: str, db: Session) -> UserResponse:
     user = verify_user(identifier, password, db)

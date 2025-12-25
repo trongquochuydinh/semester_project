@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from fastapi import HTTPException
 from werkzeug.security import check_password_hash
 
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-key")
+from api.config import JWT_SECRET
 JWT_ALGORITHM = "HS256"
 
 def create_access_token(user_id: int, role: str, expires_in: int = 3600) -> str:

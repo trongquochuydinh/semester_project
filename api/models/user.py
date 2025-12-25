@@ -2,8 +2,6 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from api.db.db_engine import Base
 
-
-
 class Role(Base):
     __tablename__ = "roles"
 
