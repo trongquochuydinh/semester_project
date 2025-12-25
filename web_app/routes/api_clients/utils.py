@@ -27,7 +27,7 @@ def api_request(method, endpoint, data=None, params=None):
             json=data,
             params=params,
             headers=headers,
-            timeout=5
+            # timeout=5
         )
 
         if res.status_code == 401:

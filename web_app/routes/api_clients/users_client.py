@@ -35,11 +35,7 @@ def send_login_request(identifier, password):
 def get_subroles():
     """Get allowed subroles for the current user."""
     try:
-        user_role = get_role()
-        if not user_role:
-            return jsonify({"error": "Failed to determine user role"}), 403
-
-        res = api_get("/api/users/get_subroles", params={"creator_role": user_role})
+        res = api_get("/api/users/get_subroles")
         return (res.text, res.status_code, res.headers.items())
 
     except APIClientError as e:
@@ -89,16 +85,8 @@ def create_user(data):
 
 def logout_user():
     """Logout the current user by invalidating their session and updating backend."""
-    token = session.get("token")
-    if not token:
-        return jsonify({"error": "Not logged in"}), 401
-
-    user_id = session.get("user", {}).get("id")
-    if not user_id:
-        return jsonify({"error": "Missing user ID"}), 400
-
     try:
-        res = api_post("/api/users/logout", {"user_id": user_id})
+        res = api_post("/api/users/logout")
         return (res.text, res.status_code, res.headers.items())
 
     except APIClientError as e:

@@ -5,12 +5,16 @@ from sqlalchemy.orm import Session
 from api.db.db_engine import SessionLocal
 from api.models.user import User
 from api.models.company import paginate_companies
-from api.services import get_current_user, paginate_users
+from api.services import paginate_users
+
+from api.dependencies.auth import get_current_user
 
 security = HTTPBearer()
 
 router = APIRouter(prefix="/api", tags=["pagination"])
 
+
+# TODO: refactor and use pagination_service.py
 @router.post("/paginate")
 async def paginate(
     request: Request,

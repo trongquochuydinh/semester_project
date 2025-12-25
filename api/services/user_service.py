@@ -12,9 +12,26 @@ from api.db.user_db import (
 )
 from sqlalchemy.orm import Session
 from api.models.user import User
-from api.utils.auth_utils import generate_password
+from api.utils.auth_utils import generate_password, verify_password
+from api.schemas.user_schema import UserWriter
 
-def create_user_account(data, db: Session):
+def assert_user_company_scope(
+    current_user: User,
+    target_company_id: int,
+):
+    if current_user.role.name == "superadmin":
+        return
+
+    if current_user.company_id != target_company_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Operation not allowed outside your company",
+        )
+
+def create_user_account(data: UserWriter, db: Session, current_user: User):
+
+    assert_user_company_scope(current_user, data.company_id)
+
     initial_password = generate_password()
     password_hash = generate_password_hash(initial_password)
 
@@ -41,17 +58,17 @@ def create_user_account(data, db: Session):
         "email": user.email,
     }
 
-def edit_user(data, db):
+def edit_user(data: UserWriter, db: Session, current_user: User):
+    assert_user_company_scope(current_user, data.company_id)
     return None
 
-def verify_user(identifier: str, password: str, db):
-    user = db_get_user(db, identifier)
-    if user and user.verify_password(password):
-        return user
+def disable_user(data: UserWarning, db: Session, current_user: User):
     return None
 
-def get_info_of_user(user_id: int, db):
+def get_info_of_user(user_id: int, db: Session, current_user: User):
     user = db_get_user_data_by_id(db, user_id)
+    assert_user_company_scope(current_user, user.company_id)
+    
     if not user:
         raise HTTPException(404, "User not found")
     
@@ -65,14 +82,25 @@ def get_info_of_user(user_id: int, db):
     
     return user_dict
 
+# questionable placement
+def verify_user(identifier: str, password: str, db):
+    user = db_get_user(db, identifier)
+    if not user:
+        return None
+
+    if not verify_password(password, user.password_hash):
+        return None
+
+    return user
+
 def get_subroles_for_role(role_name: str):
     role_map = {
-        "superadmin": {"admin"},
+        "superadmin": {"admin", "manager", "employee"},
         "admin": {"manager", "employee"},
         "manager": {"employee"},
+        "employee": set()
     }
     return role_map.get(role_name.lower(), set())
-
 
 def paginate_users(db, limit, offset, filters, user_role, company_id):
     allowed_roles = get_subroles_for_role(user_role)

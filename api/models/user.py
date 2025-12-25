@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from api.db.db_engine import Base
-from werkzeug.security import check_password_hash
+
 
 
 class Role(Base):
@@ -29,6 +29,3 @@ class User(Base):
 
     role = relationship("Role", back_populates="users")
     company = relationship("Company", backref="users")
-
-    def verify_password(self, password: str) -> bool:
-        return check_password_hash(self.password_hash, password)
