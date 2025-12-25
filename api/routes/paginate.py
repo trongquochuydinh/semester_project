@@ -7,7 +7,7 @@ from api.models.user import User
 from api.models.company import paginate_companies
 from api.services import paginate_users
 
-from api.dependencies.auth import get_current_user
+from api.dependencies import get_current_user
 
 security = HTTPBearer()
 
