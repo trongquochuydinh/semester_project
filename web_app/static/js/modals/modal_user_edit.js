@@ -25,13 +25,13 @@ export const EDIT_USER_MODAL = {
     const payload = {
       username: modal.querySelector("#username").value,
       email: modal.querySelector("#email").value,
-      role_id: modal.querySelector("#role").value,
+      role: modal.querySelector("#role").value,
       company_id: modal.querySelector("#company").value
     };
 
     try {
       const data = await apiFetch(`/users/edit/${userId}`, {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });

@@ -3,39 +3,35 @@ from werkzeug.security import generate_password_hash
 
 from api.db.user_db import (
     insert_user,
-    get_role_by_id,
     get_id_by_role,
-    assign_role,
     get_user_by_identifier as db_get_user,
     paginate_users as db_paginate_users,
     count_users as db_count_users,
-    get_user_data_by_id as db_get_user_data_by_id
+    get_user_data_by_id as db_get_user_data_by_id,
+    edit_user as db_edit_user
 )
 from sqlalchemy.orm import Session
 from api.models.user import User
 from api.utils.auth_utils import generate_password
 
 def create_user_account(data, db: Session):
-    with db.begin():
-        initial_password = generate_password()
-        password_hash = generate_password_hash(initial_password)
+    initial_password = generate_password()
+    password_hash = generate_password_hash(initial_password)
 
-        user = User(
-            username=data.username,
-            email=data.email,
-            company_id=data.company_id,
-            password_hash=password_hash,
-            status="offline",
-        )
+    role = get_id_by_role(db, data.role)
+    if not role:
+        raise HTTPException(status_code=400, detail="Role not found")
 
-        db.add(user)
-        db.flush()  # assigns user.id
+    user = User(
+        username=data.username,
+        email=data.email,
+        company_id=data.company_id,
+        role_id=role.id,
+        password_hash=password_hash,
+        status="offline",
+    )
 
-        role = get_id_by_role(db, data.role)
-        if not role:
-            raise HTTPException(status_code=400, detail="Role not found")
-
-        assign_role(db, user.id, role.id)
+    insert_user(db, user)
 
     return {
         "message": "User created successfully",
@@ -44,6 +40,9 @@ def create_user_account(data, db: Session):
         "username": user.username,
         "email": user.email,
     }
+
+def edit_user(data, db):
+    return None
 
 def verify_user(identifier: str, password: str, db):
     user = db_get_user(db, identifier)
@@ -56,15 +55,12 @@ def get_info_of_user(user_id: int, db):
     if not user:
         raise HTTPException(404, "User not found")
     
-    # Transform the user object to include the IDs needed for form population
     user_dict = {
         "id": user.id,
         "username": user.username,
         "email": user.email,
         "company_id": user.company_id,
-        
-        # Extract role_id from the relationship
-        "role": get_role_by_id(db, user.roles[0].role_id).name if user.roles else None,
+        "role": user.role.name if user else None,
     }
     
     return user_dict
@@ -85,7 +81,7 @@ def paginate_users(db, limit, offset, filters, user_role, company_id):
     def serialize(u: User):
         d = {c.name: getattr(u, c.name) for c in u.__table__.columns}
         d.pop("password_hash", None)
-        d["role_name"] = u.roles[0].role.name if u.roles else None
+        d["role_name"] = u.role.name if u.role else None
         d["company_name"] = u.company.name if u.company else None
         return d
 

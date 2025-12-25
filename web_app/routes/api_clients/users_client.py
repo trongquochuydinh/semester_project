@@ -121,3 +121,15 @@ def get_user_count():
 
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
+    
+def edit_user(user_id, data):
+    try:
+        res = api_post(f"/api/users/edit_user/{user_id}", data)
+        resp_json = res.json()
+
+        return jsonify({
+            "success": True,
+            "message": resp_json.get("message")
+        })
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code

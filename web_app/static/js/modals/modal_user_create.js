@@ -18,7 +18,7 @@ export const CREATE_USER_MODAL = {
     const payload = {
       username: modal.querySelector("#username").value,
       email: modal.querySelector("#email").value,
-      role_id: modal.querySelector("#role").value,
+      role: modal.querySelector("#role").value,
       company_id: modal.querySelector("#company").value
     };
 
