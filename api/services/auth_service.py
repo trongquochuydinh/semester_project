@@ -1,82 +1,33 @@
 from datetime import datetime
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session, joinedload
-from api.db.db_engine import get_db
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 from api.models.user import User
 from api.services import verify_user
-from api.utils import create_access_token, decode_access_token
-from typing import List
+from api.utils import create_access_token
 
-security = HTTPBearer()
+from api.schemas.user_schema import UserResponse
+from db.user_db import change_user_status
 
-def get_current_user(
-    token: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
-) -> User:
-    payload = decode_access_token(token.credentials)
-
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-
-    user = (
-        db.query(User)
-        .options(
-            joinedload(User.role),
-            joinedload(User.company),
-        )
-        .filter(User.id == user_id)
-        .first()
-    )
-
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    return user
-
-def require_role(required_roles: List[str]):
-    def role_checker(current_user: User = Depends(get_current_user)):
-        role_name = current_user.role.name
-
-        if role_name not in required_roles:
-            raise HTTPException(status_code=403, detail="Access forbidden")
-
-        return current_user  # important: pass user downstream
-
-    return role_checker
-
-def login_user(identifier: str, password: str, db: Session = Depends(get_db)):
-
+def login_user(identifier: str, password: str, db: Session) -> UserResponse:
     user = verify_user(identifier, password, db)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    db_user = db.query(User).filter(User.id == user.id).first()
-    if db_user:
-        db_user.status = "online"
-        db_user.last_login = datetime.now()
-        db.commit()
+    change_user_status(db, user, "online")
 
-    role_name = user.role.name
-    token = create_access_token(user.id, role_name)
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "id": user.id,
-        "username": user.username,
-        "role": role_name,
-        "company_id": user.company_id
-    }
+    token = create_access_token(user.id, user.role.name)
 
-def logout_user(user_id: int, db: Session):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    user.status = "offline"
-    db.commit()
+    user_response = UserResponse(
+        access_token=token,
+        token_type="bearer",
+        id=user.id,
+        username=user.username,
+        role=user.role.name,
+        company_id=user.company_id
+    )
+
+    return user_response
+
+def logout_user(current_user: User, db: Session):
+    change_user_status(db, current_user, "offline")
     return {"message": "User logged out successfully"}
-
-
-# TODO:
-# Move DB logic elsewhere

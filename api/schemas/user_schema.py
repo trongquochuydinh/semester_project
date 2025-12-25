@@ -13,7 +13,7 @@ class UserResponse(BaseModel):
     role: str
     company_id: Optional[int] = None
 
-class UserCreate(BaseModel):
+class UserWriter(BaseModel):
     username: str
     email: str
     company_id: Optional[int] = None

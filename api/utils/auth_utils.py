@@ -4,6 +4,7 @@ import string
 import jwt
 from datetime import datetime, timedelta
 from fastapi import HTTPException
+from werkzeug.security import check_password_hash
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-key")
 JWT_ALGORITHM = "HS256"
@@ -27,3 +28,6 @@ def decode_access_token(token: str):
 def generate_password(length=10):
     alphabet = string.ascii_letters + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return check_password_hash(password_hash, password)

@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from api.models.user import User, Role
+from datetime import datetime
 
 from typing import List
 
@@ -33,6 +34,12 @@ def edit_user(
 
     db.flush()
     return user
+
+def change_user_status(db: Session, user: User, status: str):
+    user.status = status
+    if status == "online":
+        user.last_login = datetime.now()
+    db.commit()
 
 def get_role_by_id(db: Session, role_id: int):
     return db.query(Role).filter_by(id=role_id).first()
