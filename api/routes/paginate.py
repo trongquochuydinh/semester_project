@@ -23,11 +23,7 @@ async def paginate(
     offset = int(body.get("offset", 0))
     filters = body.get("filters", {})
 
-    role_name = (
-        current_user.roles[0].role.name
-        if current_user.roles and current_user.roles[0].role
-        else None
-    )
+    role_name = current_user.role.name
     company_id = current_user.company_id
 
     try:
