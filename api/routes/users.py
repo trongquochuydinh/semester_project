@@ -20,14 +20,14 @@ from api.services import (
 router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.post("/login", response_model=UserResponse)
-def login_endpoint(
+def login_user_endpoint(
     data: LoginRequest, 
     db: Session = Depends(get_db)
 ):
     return login_user(data.identifier, data.password, db)
 
 @router.post("/logout", response_model=MessageResponse)
-def logout_endpoint( 
+def logout_user_endpoint( 
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -49,14 +49,8 @@ def get_subroles_endpoint(
     current_user: User = Depends(get_current_user)
 ) -> RolesResponse:
     user_role = current_user.role.name
-    roles = get_subroles_for_role(user_role)
+    roles = get_subroles_for_role(user_role, excluded_roles=[user_role])
     return RolesResponse(roles=[RoleOut(name=name) for name in roles])
-
-@router.get("/get_my_role")
-def get_my_role_endpoint(
-    current_user: User = Depends(get_current_user)
-):
-    return {"role": current_user.role.name if current_user.role else None}
 
 @router.post("/create")
 def create_user_endpoint(
@@ -87,20 +81,7 @@ def get_user_stats_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    role_name = current_user.role.name
-
-    if role_name == "superadmin":
-        total = get_user_count(db)
-        online = get_user_count(db, online_only=True)
-    elif role_name == "admin":
-        if not current_user.company_id:
-            raise HTTPException(status_code=400, detail="Admin user is not assigned to any company")
-        total = get_user_count(db, company_id=current_user.company_id)
-        online = get_user_count(db, company_id=current_user.company_id, online_only=True)
-    else:
-        raise HTTPException(status_code=403, detail="Access forbidden")
-
-    return {"total_users": total, "online_users": online}
+    return get_user_count(db, current_user)
 
 # TODO:
 # Ensure usage of get_current_user and restructure service functions to work with that workflow

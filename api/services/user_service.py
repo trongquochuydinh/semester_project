@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from werkzeug.security import generate_password_hash
+from typing import List
 
 from api.db.user_db import (
     insert_user,
@@ -93,17 +94,26 @@ def verify_user(identifier: str, password: str, db):
 
     return user
 
-def get_subroles_for_role(role_name: str):
+def get_subroles_for_role(role_name: str, excluded_roles: List[str]=None):
     role_map = {
-        "superadmin": {"admin", "manager", "employee"},
-        "admin": {"manager", "employee"},
-        "manager": {"employee"},
-        "employee": set()
+        "superadmin": {"superadmin", "admin", "manager", "employee"},
+        "admin": {"admin", "manager", "employee"},
+        "manager": {"manager", "employee"},
+        "employee": {"employee"}
     }
-    return role_map.get(role_name.lower(), set())
 
-def paginate_users(db, limit, offset, filters, user_role, company_id):
-    allowed_roles = get_subroles_for_role(user_role)
+    allowed_roles = role_map.get(role_name.lower(), set())
+
+    if excluded_roles:
+        excluded = {r.lower() for r in excluded_roles}
+        allowed_roles = allowed_roles - excluded
+    return allowed_roles
+
+def paginate_users(db: Session, limit: int, offset: int, filters: dict, user_role: str, company_id: int):
+    if "status" in filters:
+        allowed_roles = get_subroles_for_role(user_role)
+    else:
+        allowed_roles = get_subroles_for_role(user_role, excluded_roles=[user_role])
     total, results = db_paginate_users(db, filters, allowed_roles, company_id, limit, offset)
 
     def serialize(u: User):
@@ -116,5 +126,12 @@ def paginate_users(db, limit, offset, filters, user_role, company_id):
     return {"total": total, "data": [serialize(r) for r in results]}
 
 
-def get_user_count(db, company_id=None, online_only=False):
-    return db_count_users(db, company_id, online_only)
+def get_user_count(db: Session, current_user: User):
+    if current_user.role.name == "superadmin":
+        total = db_count_users(db, None, None)
+        online = db_count_users(db, None, True)
+    elif current_user.role.name == "admin":
+        total = db_count_users(db, current_user.company_id, None)
+        online = db_count_users(db, current_user.company_id, True)
+    return {"total_users": total, "online_users": online}
+        
