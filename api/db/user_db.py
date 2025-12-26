@@ -52,6 +52,10 @@ def establish_login_session(db: Session, user: User) -> str:
     change_user_status(db, user, "online")
     return session_id
 
+def clear_login_session(db: Session, user: User):
+    user.session_id = None
+    change_user_status(db, user, "offline")
+
 def get_role_by_id(db: Session, role_id: int):
     return db.query(Role).filter_by(id=role_id).first()
 
