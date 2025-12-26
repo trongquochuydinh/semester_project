@@ -1,7 +1,10 @@
+import uuid
 from sqlalchemy.orm import Session, joinedload
 from api.models.user import User, Role
 from datetime import datetime
 from typing import List
+
+from api.utils import UserAlreadyLoggedInError
 
 def insert_user(db: Session, user: User) -> User:
     db.add(user)
@@ -39,6 +42,15 @@ def change_user_status(db: Session, user: User, status: str):
     if status == "online":
         user.last_login = datetime.now()
     db.commit()
+    
+def establish_login_session(db: Session, user: User) -> str:
+    if user.session_id is not None:
+        raise UserAlreadyLoggedInError()
+
+    session_id = str(uuid.uuid4())
+    user.session_id = session_id
+    change_user_status(db, user, "online")
+    return session_id
 
 def get_role_by_id(db: Session, role_id: int):
     return db.query(Role).filter_by(id=role_id).first()

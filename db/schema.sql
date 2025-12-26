@@ -41,6 +41,8 @@ CREATE TABLE users (
     status TEXT DEFAULT 'offline',
     last_login TIMESTAMP,
 
+    session_id TEXT, 
+
     company_id INT REFERENCES companies(id) ON DELETE CASCADE,
     role_id INT NOT NULL REFERENCES roles(id)
 );
