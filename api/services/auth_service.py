@@ -6,7 +6,7 @@ from api.services import verify_user
 from api.utils import create_access_token
 
 from api.schemas.user_schema import UserResponse
-from api.db.user_db import change_user_status, establish_login_session
+from api.db.user_db import clear_login_session, establish_login_session
 from api.utils import UserAlreadyLoggedInError
 
 def login_user(identifier: str, password: str, db: Session) -> UserResponse:
@@ -38,5 +38,5 @@ def login_user(identifier: str, password: str, db: Session) -> UserResponse:
     )
 
 def logout_user(current_user: User, db: Session):
-    change_user_status(db, current_user, "offline")
+    clear_login_session(db, current_user)
     return {"message": "User logged out successfully"}
