@@ -79,7 +79,7 @@ def get_user_endpoint(
 @router.get("/get_user_stats")
 def get_user_stats_endpoint(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_role(["superadmin", "admin"]))
 ):
     return get_user_count(db, current_user)
 
