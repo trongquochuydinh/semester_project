@@ -1,4 +1,4 @@
-import { createTable } from "./elements/table.js";
+import { createPaginatedTable } from "./elements/table.js";
 import { t, apiFetch } from "./utils.js";
 import { USERS_SCHEMA_ONLINE_VIEW } from "./schemas/schema_users.js";
 import { COMPANIES_SCHEMA_VIEW } from "./schemas/schema_companies.js";
@@ -9,43 +9,34 @@ import { COMPANIES_SCHEMA_VIEW } from "./schemas/schema_companies.js";
 document.getElementById("logout-link")?.addEventListener("click", (e) => {
   e.preventDefault();
   fetch("/logout", { method: "GET" })
-    .then(() => window.location.href = "/")
-    .catch(() => window.location.href = "/");
+    .then(() => (window.location.href = "/"))
+    .catch(() => (window.location.href = "/"));
 });
 
 // =====================================
 // Dashboard Logic
 // =====================================
-document.addEventListener("DOMContentLoaded", async () => {
-
+document.addEventListener("DOMContentLoaded", () => {
   const user_container = document.getElementById("users-table");
   const company_container = document.getElementById("companies-table");
 
   const pageData = document.getElementById("page-data");
-  const role = pageData.dataset.role;
+  const role = pageData?.dataset.role;
 
   // -----------------------------
-  // USERS SECTION
+  // USERS SECTION (online users)
   // -----------------------------
   if (user_container) {
-    const users = await apiFetch("/paginate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        table_name: "users",
-        limit: 5,
-        offset: 0,
-        filters: { status: "online" }
-      })
-    });
-
-    // show online user table
-    createTable({
+    createPaginatedTable({
+      container: user_container,
       title: t("Online Users"),
-      element: user_container,
       schema: USERS_SCHEMA_ONLINE_VIEW,
-      rows: users.data,
-      actions: () => "" // no action column yet
+      tableName: "users",
+      pageSize: 5,
+      filters: {
+        status: "online",
+      },
+      actions: () => ""     // no action column in dashboard
     });
   }
 
@@ -53,26 +44,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   // COMPANIES SECTION (superadmin only)
   // -----------------------------
   if (company_container && role === "superadmin") {
-    const companies = await apiFetch("/paginate", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest"
-      },
-      body: JSON.stringify({
-        table_name: "companies",
-        limit: 5,
-        offset: 0,
-        filters: {}
-      })
-    });
-
-    createTable({
-      title: "Companies",
-      element: company_container,
+    createPaginatedTable({
+      container: company_container,
+      title: t("Companies"),
       schema: COMPANIES_SCHEMA_VIEW,
-      rows: companies.data,
-      actions: () => "" // no action column yet
+      tableName: "companies",
+      pageSize: 5,
+      filters: {},
+      actions: () => ""
     });
   }
 });
@@ -97,9 +76,9 @@ async function loadUserStats() {
   card.style.width = "250px";
 
   card.innerHTML = `
-    <h3 class="mb-2">User Statistics</h3>
-    <p><b>Total Users:</b> ${res.total_users ?? "N/A"}</p>
-    <p><b>Online Users:</b> ${res.online_users ?? "N/A"}</p>
+    <h3 class="mb-2">${t("User Statistics")}</h3>
+    <p><b>${t("Total Users")}:</b> ${res.total_users ?? "N/A"}</p>
+    <p><b>${t("Online Users")}:</b> ${res.online_users ?? "N/A"}</p>
   `;
 
   container.appendChild(card);

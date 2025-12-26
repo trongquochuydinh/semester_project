@@ -111,7 +111,7 @@ def get_subroles_for_role(role_name: str, excluded_roles: List[str]=None):
 
 def paginate_users(db: Session, limit: int, offset: int, filters: dict, user_role: str, company_id: int):
     if "status" in filters:
-        allowed_roles = get_subroles_for_role(user_role)
+        allowed_roles = None
     else:
         allowed_roles = get_subroles_for_role(user_role, excluded_roles=[user_role])
     total, results = db_paginate_users(db, filters, allowed_roles, company_id, limit, offset)
@@ -124,7 +124,6 @@ def paginate_users(db: Session, limit: int, offset: int, filters: dict, user_rol
         return d
 
     return {"total": total, "data": [serialize(r) for r in results]}
-
 
 def get_user_count(db: Session, current_user: User):
     if current_user.role.name == "superadmin":
