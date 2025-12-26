@@ -5,11 +5,11 @@ from api.models.user import User
 from api.services import verify_user
 from api.utils import create_access_token
 
-from api.schemas.user_schema import UserResponse
+from api.schemas import LoginResponse, MessageResponse
 from api.db.user_db import clear_login_session, establish_login_session
 from api.utils import UserAlreadyLoggedInError
 
-def login_user(identifier: str, password: str, db: Session) -> UserResponse:
+def login_user(identifier: str, password: str, db: Session) -> LoginResponse:
     user = verify_user(identifier, password, db)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -28,7 +28,7 @@ def login_user(identifier: str, password: str, db: Session) -> UserResponse:
         session_id=session_id
     )
 
-    return UserResponse(
+    return LoginResponse(
         access_token=token,
         token_type="bearer",
         id=user.id,
@@ -37,6 +37,8 @@ def login_user(identifier: str, password: str, db: Session) -> UserResponse:
         company_id=user.company_id
     )
 
-def logout_user(current_user: User, db: Session):
+def logout_user(current_user: User, db: Session) -> MessageResponse:
     clear_login_session(db, current_user)
-    return {"message": "User logged out successfully"}
+    return MessageResponse(
+        message="User logged out successfully"
+    )
