@@ -9,16 +9,13 @@
 </div>
 
 <div class="row" id="dashboard-row">
-
-  {% if role == 'superadmin' or role == 'admin' or role == 'manager' %}
     <div id="users-table"></div>
-
-    {% if role == 'superadmin' %}
+    <br>
+    {% if role == 'superadmin' or role == 'admin'%}
       <div id="companies-table"></div>
+      <br>
       <div id="stats-container"></div>
     {% endif %}
-
-  {% endif %}
 
 </div>
 {% endblock %}

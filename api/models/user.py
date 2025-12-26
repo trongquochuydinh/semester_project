@@ -27,3 +27,5 @@ class User(Base):
 
     role = relationship("Role", back_populates="users")
     company = relationship("Company", backref="users")
+
+    session_id = Column(String, nullable=True)

@@ -50,23 +50,6 @@ def get_my_data():
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
 
-def get_role():
-    """Fetch the user's role via FastAPI using stored JWT."""
-    try:
-        res = api_get("/api/users/get_my_role")
-
-        if res.status_code == 200:
-            data = res.json()
-            return data.get("role")
-
-    except APIClientError:
-        pass
-    except Exception:
-        pass
-
-    return None
-
-
 def create_user(data):
     """Create a new user via API."""
     try:
