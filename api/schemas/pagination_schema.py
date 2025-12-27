@@ -6,3 +6,7 @@ class PaginationRequest(BaseModel):
     limit: int = 10
     offset: int = 0
     filters: Dict[str, Any] = {}
+
+class PaginationResponse(BaseModel):
+    total: int
+    data: list
