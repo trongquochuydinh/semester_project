@@ -5,45 +5,52 @@ from typing import List
 from api.db.user_db import (
     insert_user,
     get_id_by_role,
-    get_user_by_identifier as db_get_user,
     paginate_users as db_paginate_users,
     count_users as db_count_users,
-    get_user_data_by_id as db_get_user_data_by_id,
-    edit_user as db_edit_user
+    get_user_data_by_id as db_get_user_data_by_id
 )
+from api.services.company_service import assert_company_access
+
 from sqlalchemy.orm import Session
 from api.models.user import User
-from api.utils.auth_utils import generate_password, verify_password
-from api.schemas.user_schema import UserWriter, UserCreationResponse
+from api.utils.auth_utils import generate_password
+from api.schemas import UserWriter, UserCreateResponse, UserCountResponse, UserGetResponse, PaginationResponse
 
-def assert_user_company_scope(
-    current_user: User,
-    target_company_id: int,
-):
-    if current_user.role.name == "superadmin":
-        return
+def create_user_account(data: UserWriter, db: Session, current_user: User) -> UserCreateResponse:
 
-    if current_user.company_id != target_company_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Operation not allowed outside your company",
-        )
+    # 1. Check for company existence and scope
+    company = assert_company_access(
+        db,
+        is_superadmin=(current_user.role.name == "superadmin"),
+        current_user_company_id=current_user.company_id,
+        company_id=data.company_id,
+    )
 
-def create_user_account(data: UserWriter, db: Session, current_user: User) -> UserCreationResponse:
-
-    assert_user_company_scope(current_user, data.company_id)
-
-    user_initial_password = generate_password()
-    password_hash = generate_password_hash(user_initial_password)
-
+    # 2. Resolve role from DB FIRST
     role = get_id_by_role(db, data.role)
     if not role:
         raise HTTPException(status_code=400, detail="Role not found")
 
+    # 3. Role permission check
+    available_roles = get_subroles_for_role(
+        current_user.role.name,
+        excluded_roles=[current_user.role.name],
+    )
+
+    if role.name not in available_roles:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not allowed to assign this role",
+        )
+
+    # 4. Create user
+    user_initial_password = generate_password()
+    password_hash = generate_password_hash(user_initial_password)
+
     user = User(
         username=data.username,
         email=data.email,
-        company_id=data.company_id,
+        company_id=company.id,
         role_id=role.id,
         password_hash=password_hash,
         status="offline",
@@ -51,47 +58,43 @@ def create_user_account(data: UserWriter, db: Session, current_user: User) -> Us
 
     insert_user(db, user)
 
-    response = UserCreationResponse(
+    return UserCreateResponse(
         message="User created successfully",
-        initial_password=user_initial_password
+        initial_password=user_initial_password,
     )
 
-    return response
-
 def edit_user(data: UserWriter, db: Session, current_user: User):
-    assert_user_company_scope(current_user, data.company_id)
+
+    company = assert_company_access(
+        db,
+        is_superadmin=(current_user.role.name == "superadmin"),
+        current_user_company_id=current_user.company_id,
+        company_id=data.company_id,
+    )
     return None
 
 def disable_user(data: UserWarning, db: Session, current_user: User):
     return None
 
-def get_info_of_user(user_id: int, db: Session, current_user: User):
+def get_info_of_user(user_id: int, db: Session, current_user: User) -> UserGetResponse:
     user = db_get_user_data_by_id(db, user_id)
-    assert_user_company_scope(current_user, user.company_id)
-    
+
     if not user:
-        raise HTTPException(404, "User not found")
-    
-    user_dict = {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "company_id": user.company_id,
-        "role": user.role.name if user else None,
-    }
-    
-    return user_dict
+        raise HTTPException(status_code=404, detail="User not found")
 
-# questionable placement
-def verify_user(identifier: str, password: str, db):
-    user = db_get_user(db, identifier)
-    if not user:
-        return None
+    assert_company_access(
+        db,
+        is_superadmin=(current_user.role.name == "superadmin"),
+        current_user_company_id=current_user.company_id,
+        company_id=user.company_id,
+    )
 
-    if not verify_password(password, user.password_hash):
-        return None
-
-    return user
+    return UserGetResponse(
+        username=user.username,
+        email=user.email,
+        company_id=user.company_id,
+        role=user.role.name,
+    )
 
 def get_subroles_for_role(role_name: str, excluded_roles: List[str]=None):
     role_map = {
@@ -108,6 +111,7 @@ def get_subroles_for_role(role_name: str, excluded_roles: List[str]=None):
         allowed_roles = allowed_roles - excluded
     return allowed_roles
 
+# TODO: Make this more coherent 
 def paginate_users(db: Session, limit: int, offset: int, filters: dict, user_role: str, company_id: int):
     if "status" in filters:
         allowed_roles = None
@@ -122,14 +126,22 @@ def paginate_users(db: Session, limit: int, offset: int, filters: dict, user_rol
         d["company_name"] = u.company.name if u.company else None
         return d
 
-    return {"total": total, "data": [serialize(r) for r in results]}
+    res = PaginationResponse(
+        total=total,
+        data=[serialize(r) for r in results]
+    )
 
-def get_user_count(db: Session, current_user: User):
-    if current_user.role.name == "superadmin":
-        total = db_count_users(db, None, None)
-        online = db_count_users(db, None, True)
-    elif current_user.role.name == "admin":
-        total = db_count_users(db, current_user.company_id, None)
-        online = db_count_users(db, current_user.company_id, True)
-    return {"total_users": total, "online_users": online}
+    return res
+
+def get_user_count(db: Session, current_user: User) -> UserCountResponse:
+    is_superadmin = current_user.role.name == "superadmin"
+    company_id = None if is_superadmin else current_user.company_id
+
+    total = db_count_users(db, company_id=company_id)
+    online = db_count_users(db, company_id=company_id, online_only=True)
+
+    return UserCountResponse(
+        total_users=total,
+        online_users=online,
+    )
         
