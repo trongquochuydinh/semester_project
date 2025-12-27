@@ -9,7 +9,6 @@ from api.utils import UserAlreadyLoggedInError
 def insert_user(db: Session, user: User) -> User:
     db.add(user)
     db.flush()
-    return user
 
 def edit_user(
     db: Session,

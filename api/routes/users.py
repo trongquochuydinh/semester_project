@@ -5,7 +5,7 @@ from api.dependencies import get_current_user, require_role
 from api.db.db_engine import get_db
 from api.models.user import User
 from api.schemas import (
-    LoginRequest, UserResponse, UserWriter, RolesResponse, RoleOut, MessageResponse
+    LoginRequest, LoginResponse, UserCreationResponse, UserEditRequest, UserWriter, RolesResponse, RoleOut, MessageResponse
 )
 from api.services import (
     login_user, 
@@ -19,7 +19,7 @@ from api.services import (
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
-@router.post("/login", response_model=UserResponse)
+@router.post("/login", response_model=LoginResponse)
 def login_user_endpoint(
     data: LoginRequest, 
     db: Session = Depends(get_db)
@@ -33,6 +33,7 @@ def logout_user_endpoint(
 ):
     return logout_user(current_user, db)
 
+# Is this needed?
 @router.get("/me")
 def get_me_endpoint(
     current_user: User = Depends(get_current_user)
@@ -47,12 +48,11 @@ def get_me_endpoint(
 @router.get("/get_subroles", response_model=RolesResponse)
 def get_subroles_endpoint(
     current_user: User = Depends(get_current_user)
-) -> RolesResponse:
-    user_role = current_user.role.name
-    roles = get_subroles_for_role(user_role, excluded_roles=[user_role])
+):
+    roles = get_subroles_for_role(current_user.role.name, excluded_roles=[current_user.role.name])
     return RolesResponse(roles=[RoleOut(name=name) for name in roles])
 
-@router.post("/create")
+@router.post("/create", response_model=UserCreationResponse)
 def create_user_endpoint(
     data : UserWriter, 
     db : Session = Depends(get_db), 
@@ -60,7 +60,7 @@ def create_user_endpoint(
 ):
     return create_user_account(data, db, current_user)
 
-@router.post("/edit_user/{user_id}")
+@router.post("/edit_user/{user_id}", response_model=UserEditRequest)
 def edit_user_endpoint(
     data : UserWriter, 
     db : Session = Depends(get_db),
@@ -82,6 +82,3 @@ def get_user_stats_endpoint(
     current_user: User = Depends(require_role(["superadmin", "admin"]))
 ):
     return get_user_count(db, current_user)
-
-# TODO:
-# Ensure usage of get_current_user and restructure service functions to work with that workflow
