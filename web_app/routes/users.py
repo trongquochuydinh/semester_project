@@ -6,7 +6,8 @@ from web_app.routes.api_clients.users_client import(
     get_user_count as proxy_get_user_count, 
     get_user as proxy_get_user, 
     get_my_data as proxy_get_my_data,
-    edit_user as proxy_edit_user
+    edit_user as proxy_edit_user,
+    paginate_user as proxy_paginate_user
 )
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
@@ -48,5 +49,10 @@ def edit_user(user_id):
     data = request.get_json()
     return proxy_edit_user(user_id, data)
 
+@users_bp.route("/paginate", methods=["POST"])
+@token_required
+def paginate_user():
+    data = request.get_json() or {}
+    return proxy_paginate_user(data)
 # for frontend template rendering, check "user" in session
 # for calls to API endpoints, check "token" in session

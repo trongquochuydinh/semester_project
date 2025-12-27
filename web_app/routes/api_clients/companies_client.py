@@ -26,3 +26,7 @@ def get_company(company_id):
     except APIClientError as e:
         # graceful fallback — network or backend error
         return jsonify({"error": e.message}), e.status_code
+    
+def paginate_company(data):
+    res = api_post("/api/companies/paginate", data)
+    return (res.text, res.status_code, res.headers.items())

@@ -9,7 +9,7 @@ from api.config import JWT_SECRET
 from api.utils.exception_utils import TokenExpiredError, InvalidTokenError
 JWT_ALGORITHM = "HS256"
 
-def create_access_token(user_id: int, role: str, session_id, expires_in: int = 5) -> str:
+def create_access_token(user_id: int, role: str, session_id, expires_in: int = 3600) -> str:
     payload = {
         "sub": user_id,
         "role": role,

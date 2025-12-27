@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from api.models.company import Company
 from api.db.company_db import get_company_data_by_id as db_get_company_data_by_id
 
+# TODO: Move db logic somewhere else
 def create_company(data, db: Session):
     company = Company(
         name=data.company_name,
@@ -23,3 +24,24 @@ def get_info_of_company(company_id, db):
         "field" : company.field 
     }
     return company_dict
+
+def paginate_companies(
+    db: Session,
+    limit: int,
+    offset: int,
+    filters: dict
+):
+    query = db.query(Company)
+
+    for key, value in filters.items():
+        if hasattr(Company, key):
+            query = query.filter(getattr(Company, key) == value)
+
+    total = query.count()
+    results = query.offset(offset).limit(limit).all()
+
+    def to_dict(obj):
+        return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+
+    data = [to_dict(r) for r in results]
+    return {"total": total, "data": data}

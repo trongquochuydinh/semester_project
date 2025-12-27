@@ -5,7 +5,7 @@ from api.dependencies import get_current_user, require_role
 from api.db.db_engine import get_db
 from api.models.user import User
 from api.schemas import (
-    LoginRequest, LoginResponse, UserCreationResponse, UserEditRequest, UserWriter, RolesResponse, RoleOut, MessageResponse
+    LoginRequest, LoginResponse, UserCreationResponse, UserEditRequest, UserWriter, RolesResponse, RoleOut, MessageResponse, PaginationRequest
 )
 from api.services import (
     login_user, 
@@ -14,7 +14,8 @@ from api.services import (
     logout_user,  
     get_user_count, 
     get_info_of_user,
-    edit_user
+    edit_user,
+    paginate_users
 )
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -82,3 +83,18 @@ def get_user_stats_endpoint(
     current_user: User = Depends(require_role(["superadmin", "admin"]))
 ):
     return get_user_count(db, current_user)
+
+@router.post("/paginate")
+def paginate_users_endpoint(
+    data: PaginationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return paginate_users(
+        db=db,
+        limit=data.limit,
+        offset=data.offset,
+        filters=data.filters,
+        user_role=current_user.role.name,
+        company_id=current_user.company_id,
+    )
