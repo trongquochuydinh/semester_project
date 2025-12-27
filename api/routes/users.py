@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from api.dependencies import get_current_user, require_role
 from api.db.db_engine import get_db
 from api.models.user import User
 from api.schemas import (
-    LoginRequest, LoginResponse, UserCreationResponse, UserEditRequest, UserWriter, RolesResponse, RoleOut, MessageResponse, PaginationRequest
+    LoginRequest, LoginResponse, 
+    UserCreateResponse, UserCreateRequest, UserEditResponse, UserEditRequest, UserCountResponse, UserGetResponse,
+    RolesResponse, RoleOut, MessageResponse, 
+    PaginationRequest, PaginationResponse
 )
 from api.services import (
     login_user, 
@@ -22,15 +25,15 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.post("/login", response_model=LoginResponse)
 def login_user_endpoint(
-    data: LoginRequest, 
+    request: LoginRequest, 
     db: Session = Depends(get_db)
 ):
-    return login_user(data.identifier, data.password, db)
+    return login_user(request.identifier, request.password, db)
 
 @router.post("/logout", response_model=MessageResponse)
 def logout_user_endpoint( 
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     return logout_user(current_user, db)
 
@@ -53,23 +56,23 @@ def get_subroles_endpoint(
     roles = get_subroles_for_role(current_user.role.name, excluded_roles=[current_user.role.name])
     return RolesResponse(roles=[RoleOut(name=name) for name in roles])
 
-@router.post("/create", response_model=UserCreationResponse)
+@router.post("/create", response_model=UserCreateResponse)
 def create_user_endpoint(
-    data : UserWriter, 
+    request : UserCreateRequest, 
     db : Session = Depends(get_db), 
     current_user : User = Depends(require_role(["superadmin", "admin", "manager"]))
 ):
-    return create_user_account(data, db, current_user)
+    return create_user_account(request, db, current_user)
 
-@router.post("/edit_user/{user_id}", response_model=UserEditRequest)
+@router.post("/edit_user/{user_id}", response_model=UserEditResponse)
 def edit_user_endpoint(
-    data : UserWriter, 
+    request : UserEditRequest, 
     db : Session = Depends(get_db),
     current_user : User = Depends(require_role(["superadmin", "admin", "manager"]))
 ):
-    return edit_user(data, db, current_user)
+    return edit_user(request, db, current_user)
 
-@router.get("/get/{user_id}")
+@router.get("/get/{user_id}", response_model=UserGetResponse)
 def get_user_endpoint(
     user_id: int, 
     db: Session = Depends(get_db),
@@ -77,24 +80,24 @@ def get_user_endpoint(
 ):
     return get_info_of_user(user_id, db, current_user)
 
-@router.get("/get_user_stats")
+@router.get("/get_user_stats", response_model=UserCountResponse)
 def get_user_stats_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(["superadmin", "admin"]))
 ):
     return get_user_count(db, current_user)
 
-@router.post("/paginate")
+@router.post("/paginate", response_model=PaginationResponse)
 def paginate_users_endpoint(
-    data: PaginationRequest,
+    request: PaginationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     return paginate_users(
         db=db,
-        limit=data.limit,
-        offset=data.offset,
-        filters=data.filters,
+        limit=request.limit,
+        offset=request.offset,
+        filters=request.filters,
         user_role=current_user.role.name,
         company_id=current_user.company_id,
     )
