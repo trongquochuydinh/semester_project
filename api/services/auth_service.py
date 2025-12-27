@@ -2,11 +2,10 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from api.models.user import User
-from api.services import verify_user
-from api.utils import create_access_token
+from api.utils import create_access_token, verify_password
 
 from api.schemas import LoginResponse, MessageResponse
-from api.db.user_db import clear_login_session, establish_login_session
+from api.db.user_db import clear_login_session, establish_login_session, get_user_by_identifier as db_get_user_by_identifier
 from api.utils import UserAlreadyLoggedInError
 
 def login_user(identifier: str, password: str, db: Session) -> LoginResponse:
@@ -42,3 +41,13 @@ def logout_user(current_user: User, db: Session) -> MessageResponse:
     return MessageResponse(
         message="User logged out successfully"
     )
+
+def verify_user(identifier: str, password: str, db):
+    user = db_get_user_by_identifier(db, identifier)
+    if not user:
+        return None
+
+    if not verify_password(password, user.password_hash):
+        return None
+
+    return user
