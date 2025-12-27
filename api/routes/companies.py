@@ -4,10 +4,15 @@ from typing import List
 
 from requests import Session
 from api.db.db_engine import SessionLocal, get_db
+from api.dependencies import require_role
 from api.models.company import Company
-from api.schemas.company_schema import CompanyCreate
+from api.models.user import User
+from api.schemas import(
+    CompanyCreate,
+    PaginationRequest
+)
 
-from api.services import create_company, get_info_of_company
+from api.services import create_company, get_info_of_company, paginate_companies
 
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
@@ -31,3 +36,16 @@ def create_company_endpoint(data: CompanyCreate, db: Session = Depends(get_db)):
 @router.get("/get/{company_id}")
 def get_company(company_id, db: Session = Depends(get_db)):
     return get_info_of_company(company_id, db)
+
+@router.post("/paginate")
+def paginate_companies_endpoint(
+    data: PaginationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["superadmin"])),
+):
+    return paginate_companies(
+        db=db,
+        limit=data.limit,
+        offset=data.offset,
+        filters=data.filters
+    )

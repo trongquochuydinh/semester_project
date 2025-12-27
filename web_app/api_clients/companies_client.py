@@ -1,5 +1,5 @@
 from flask import jsonify
-from web_app.routes.api_clients.utils import api_get, api_post, APIClientError
+from web_app.api_clients.utils import api_get, api_post, APIClientError
 
 def get_companies():
     """Fetch list of companies via the FastAPI backend."""
@@ -26,3 +26,7 @@ def get_company(company_id):
     except APIClientError as e:
         # graceful fallback — network or backend error
         return jsonify({"error": e.message}), e.status_code
+    
+def paginate_company(data):
+    res = api_post("/api/companies/paginate", data)
+    return (res.text, res.status_code, res.headers.items())

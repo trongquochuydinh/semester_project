@@ -14,7 +14,7 @@ from api.db.user_db import (
 from sqlalchemy.orm import Session
 from api.models.user import User
 from api.utils.auth_utils import generate_password, verify_password
-from api.schemas.user_schema import UserWriter
+from api.schemas.user_schema import UserWriter, UserCreationResponse
 
 def assert_user_company_scope(
     current_user: User,
@@ -29,12 +29,12 @@ def assert_user_company_scope(
             detail="Operation not allowed outside your company",
         )
 
-def create_user_account(data: UserWriter, db: Session, current_user: User):
+def create_user_account(data: UserWriter, db: Session, current_user: User) -> UserCreationResponse:
 
     assert_user_company_scope(current_user, data.company_id)
 
-    initial_password = generate_password()
-    password_hash = generate_password_hash(initial_password)
+    user_initial_password = generate_password()
+    password_hash = generate_password_hash(user_initial_password)
 
     role = get_id_by_role(db, data.role)
     if not role:
@@ -51,13 +51,12 @@ def create_user_account(data: UserWriter, db: Session, current_user: User):
 
     insert_user(db, user)
 
-    return {
-        "message": "User created successfully",
-        "initial_password": initial_password,
-        "user_id": user.id,
-        "username": user.username,
-        "email": user.email,
-    }
+    response = UserCreationResponse(
+        message="User created successfully",
+        initial_password=user_initial_password
+    )
+
+    return response
 
 def edit_user(data: UserWriter, db: Session, current_user: User):
     assert_user_company_scope(current_user, data.company_id)

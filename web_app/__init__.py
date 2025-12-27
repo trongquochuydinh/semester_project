@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, session, request, redirect, url_for
 from web_app.config import FLASK_SECRET_KEY
-from web_app.routes.api_clients.utils import APIUnauthorizedError
+from web_app.api_clients.utils import APIUnauthorizedError
 
 app = Flask(__name__)
 app.config.update(
@@ -28,13 +28,11 @@ from web_app.routes.context import context_bp
 from web_app.routes.auth import auth_bp
 from web_app.routes.users import users_bp
 from web_app.routes.companies import companies_bp
-from web_app.routes.pagination import pagination_bp
 
 app.register_blueprint(context_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
 app.register_blueprint(companies_bp)
-app.register_blueprint(pagination_bp)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)

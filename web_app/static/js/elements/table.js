@@ -14,11 +14,10 @@ export function createPaginatedTable({
   async function loadPage(page = 0) {
     currentPage = page;
 
-    const res = await apiFetch("/paginate", {
+    const res = await apiFetch(`/${tableName}/paginate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        table_name: tableName,
         limit: pageSize,
         offset: page * pageSize,
         filters

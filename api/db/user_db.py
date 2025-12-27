@@ -9,7 +9,6 @@ from api.utils import UserAlreadyLoggedInError
 def insert_user(db: Session, user: User) -> User:
     db.add(user)
     db.flush()
-    return user
 
 def edit_user(
     db: Session,
@@ -55,6 +54,11 @@ def establish_login_session(db: Session, user: User) -> str:
 def clear_login_session(db: Session, user: User):
     user.session_id = None
     change_user_status(db, user, "offline")
+
+def clear_login_session_by_user_id(db: Session, user_id: int):
+    user = get_user_data_by_id(db, user_id)
+    if user:
+        clear_login_session(db, user)
 
 def get_role_by_id(db: Session, role_id: int):
     return db.query(Role).filter_by(id=role_id).first()

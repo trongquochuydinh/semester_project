@@ -1,5 +1,5 @@
 from flask import session, jsonify
-from web_app.routes.api_clients.utils import api_post, api_get, APIClientError
+from web_app.api_clients.utils import api_post, api_get, APIClientError
 
 
 def send_login_request(identifier, password):
@@ -104,3 +104,7 @@ def edit_user(user_id, data):
         })
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
+    
+def paginate_user(data):
+    res = api_post("/api/users/paginate", data)
+    return (res.text, res.status_code, res.headers.items())
