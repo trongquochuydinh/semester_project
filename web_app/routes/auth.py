@@ -1,5 +1,5 @@
 from flask import Blueprint, request, session, render_template
-from web_app.api_clients.users_client import send_login_request, logout_user as proxy_logout_user
+from web_app.api_clients.users_client import login_user as proxy_login_user, logout_user as proxy_logout_user
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -14,7 +14,7 @@ def login():
     data = request.get_json()
     identifier = data.get('identifier')
     password = data.get('password')
-    return send_login_request(identifier, password)
+    return proxy_login_user(identifier, password)
 
 @auth_bp.route('/logout')
 def logout():

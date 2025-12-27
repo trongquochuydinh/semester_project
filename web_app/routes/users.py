@@ -54,5 +54,6 @@ def edit_user(user_id):
 def paginate_user():
     data = request.get_json() or {}
     return proxy_paginate_user(data)
+
 # for frontend template rendering, check "user" in session
 # for calls to API endpoints, check "token" in session
