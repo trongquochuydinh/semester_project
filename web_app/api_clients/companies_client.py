@@ -1,5 +1,5 @@
 from flask import jsonify
-from web_app.routes.api_clients.utils import api_get, api_post, APIClientError
+from web_app.api_clients.utils import api_get, api_post, APIClientError
 
 def get_companies():
     """Fetch list of companies via the FastAPI backend."""

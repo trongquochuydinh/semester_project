@@ -1,6 +1,6 @@
 from flask import Blueprint, session, render_template, request
-from web_app.routes.api_clients.utils import token_required
-from web_app.routes.api_clients.companies_client import (
+from web_app.api_clients.utils import token_required
+from web_app.api_clients.companies_client import (
     get_companies as proxy_get_companies, 
     create_company as proxy_create_company, 
     get_company as proxy_get_company,

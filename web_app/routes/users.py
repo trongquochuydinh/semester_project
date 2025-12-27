@@ -1,6 +1,6 @@
 from flask import Blueprint, request, render_template
-from web_app.routes.api_clients.utils import login_required, token_required
-from web_app.routes.api_clients.users_client import(
+from web_app.api_clients.utils import login_required, token_required
+from web_app.api_clients.users_client import(
     create_user as proxy_create_user, 
     get_subroles as proxy_get_subroles, 
     get_user_count as proxy_get_user_count, 

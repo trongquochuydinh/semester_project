@@ -1,5 +1,5 @@
 from flask import session, jsonify
-from web_app.routes.api_clients.utils import api_post, api_get, APIClientError
+from web_app.api_clients.utils import api_post, api_get, APIClientError
 
 
 def send_login_request(identifier, password):
