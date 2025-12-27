@@ -40,7 +40,6 @@ def change_user_status(db: Session, user: User, status: str):
     user.status = status
     if status == "online":
         user.last_login = datetime.now()
-    db.commit()
     
 def establish_login_session(db: Session, user: User) -> str:
     if user.session_id is not None:
