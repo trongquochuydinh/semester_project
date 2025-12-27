@@ -2,7 +2,7 @@ from flask import session, jsonify
 from web_app.api_clients.utils import api_post, api_get, APIClientError
 
 
-def send_login_request(identifier, password):
+def login_user(identifier, password):
     """Authenticate the user and store session/token on success."""
     try:
         res = api_post("/api/users/login", {
