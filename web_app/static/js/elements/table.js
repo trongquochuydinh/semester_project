@@ -82,25 +82,27 @@ export function createTable({
     </div>
 
     <div class="card tbl-card">
-      <div class="card-body">
-        <table class="table table-hover table-borderless mb-0">
-          <thead>
-            <tr>
-              ${schema.columns.map(c => `<th>${c.label}</th>`).join("")}
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(row => `
+      <div class="card-body p-0">
+        <div class="table-scroll">
+          <table class="table table-hover table-borderless mb-0">
+            <thead>
               <tr>
-                ${schema.columns.map(c => {
-                  if (c.key === "__actions__") return `<td>${actions(row)}</td>`;
-                  if (c.render) return `<td>${c.render(row[c.key], row)}</td>`;
-                  return `<td>${row[c.key] ?? "—"}</td>`;
-                }).join("")}
+                ${schema.columns.map(c => `<th>${c.label}</th>`).join("")}
               </tr>
-            `).join("")}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  ${schema.columns.map(c => {
+                    if (c.key === "__actions__") return `<td>${actions(row)}</td>`;
+                    if (c.render) return `<td>${c.render(row[c.key], row)}</td>`;
+                    return `<td>${row[c.key] ?? "—"}</td>`;
+                  }).join("")}
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   `;
