@@ -2,9 +2,6 @@ export function createStatCard({
   container,
   title,
   value,
-  badgeText,
-  badgeColor,
-  trendIcon,
   description
 }) {
   if (!container) {

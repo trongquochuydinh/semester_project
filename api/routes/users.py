@@ -101,7 +101,7 @@ def toggle_user_is_active_endpoint(
 @router.get("/get_user_stats", response_model=UserCountResponse)
 def get_user_stats_endpoint(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["superadmin", "admin"]))
+    current_user: User = Depends(get_current_user)
 ):
     return get_user_count(db, current_user)
 

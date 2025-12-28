@@ -67,38 +67,47 @@ async function loadUserStats() {
 
   container.innerHTML = "";
 
-  const res = await apiFetch("/users/get_user_stats");
+  // --- Online users donut ---
+  try {
+    const res = await apiFetch("/users/get_user_stats");
 
-  const total = res.total_users ?? 0;
-  const online = res.online_users ?? 0;
+    const total = res.total_users ?? 0;
+    const online = res.online_users ?? 0;
 
-  createDonutStat({
-    container,
-    title: t("Online Users"),
-    value: online,
-    total: total,
-    label: t("users online"),
-    color: "#28a745"
-  });
+    createDonutStat({
+      container,
+      title: t("Online Users"),
+      value: online,
+      total: total,
+      label: t("users online"),
+      color: "#28a745"
+    });
+  } catch (err) {
+    console.error("Failed to load user stats:", err);
 
+    createStatCard({
+      container,
+      title: t("Online Users"),
+      value: "—",
+      description: t("Unavailable"),
+      badgeText: "ERR",
+      badgeColor: "danger"
+    });
+  }
 
+  // --- Orders made (static / later API) ---
   createStatCard({
     container,
     title: t("Orders made"),
     value: 128,
-    badgeText: "+12%",
-    badgeColor: "success",
-    trendIcon: "ti ti-trending-up",
     description: t("this week")
   });
 
+  // --- Items sold (static / later API) ---
   createStatCard({
     container,
     title: t("Items sold"),
     value: 128,
-    badgeText: "+12%",
-    badgeColor: "success",
-    trendIcon: "ti ti-trending-up",
     description: t("this week")
   });
 }
