@@ -3,21 +3,31 @@
 {% block title %}Home | Warehouse{% endblock %}
 
 {% block content %}
-<div id="page-data"
-     data-role="{{ role }}"
-     data-company-id="{{ company_id if company_id else '' }}">
-</div>
 
-<div class="row" id="dashboard-row">
+<!-- [ Dashboard Grid ] -->
+<div class="row">
+
+  <!-- KPI cards row -->
+  <div class="col-md-12 mb-4">
+    <div class="row" id="stats-container">
+      <!-- Donut + KPI cards injected here -->
+    </div>
+  </div>
+
+  <!-- Online users -->
+  <div class="col-md-12 col-xl-8">
     <div id="users-table"></div>
-    <br>
-    {% if role == 'superadmin' or role == 'admin'%}
-      <div id="companies-table"></div>
-      <br>
-      <div id="stats-container"></div>
-    {% endif %}
+  </div>
+
+  <!-- Companies (superadmin only) -->
+  {% if role == 'superadmin' %}
+  <div class="col-md-12 col-xl-4">
+    <div id="companies-table"></div>
+  </div>
+  {% endif %}
 
 </div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -26,6 +36,7 @@
 <!-- CORE components -->
 <script type="module" src="{{ url_for('static', filename='js/elements/card.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/elements/table.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/elements/donut_stat.js') }}"></script>
 
 <!-- PAGE LOGIC -->
 <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>

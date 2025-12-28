@@ -1,33 +1,40 @@
+export function createStatCard({
+  container,
+  title,
+  value,
+  badgeText,
+  badgeColor,
+  trendIcon,
+  description
+}) {
+  if (!container) {
+    throw new Error("createStatCard: container is required");
+  }
 
-/**
- * Create a Bootstrap card for dashboard stats
- * @param {Object} options - Card config
- * @param {string} options.title - Small title (e.g. "Total Order")
- * @param {string|number} options.value - Main number (e.g. 18800)
- * @param {string} options.badgeText - Badge text (e.g. "27.4%")
- * @param {string} options.badgeColor - Badge color suffix (success, warning, danger)
- * @param {string} options.trendIcon - Icon class for trend (ti ti-trending-up / ti ti-trending-down)
- * @param {string} options.description - Extra description under the value
- * @returns {HTMLElement} - The card element
- */
-function createStatCard({ title, value, badgeText, badgeColor, trendIcon, description }) {
-  // Create wrapper col
   const col = document.createElement("div");
-  col.className = "col-md-6 col-xl-3";
+  col.className = "col-md-6 col-xl-3 mb-3";
 
   col.innerHTML = `
-    <div class="card">
-      <div class="card-body">
-        <h6 class="mb-2 f-w-400 text-muted">${title}</h6>
-        <h4 class="mb-3">${value}
-          <span class="badge bg-light-${badgeColor} border border-${badgeColor}">
-            <i class="${trendIcon}"></i> ${badgeText}
+    <div class="card h-100">
+      <div class="card-body py-4 text-center">
+
+        <h5 class="mb-3 f-w-400 text-muted">${title}</h5>
+
+        <div class="d-flex justify-content-center align-items-center mb-3">
+          <span class="fw-bold" style="font-size: 2.25rem;">
+            ${value}
           </span>
-        </h4>
-        <p class="mb-0 text-muted text-sm">${description}</p>
+        </div>
+
+        ${
+          description
+            ? `<p class="mb-0 text-muted text-sm">${description}</p>`
+            : ""
+        }
+
       </div>
     </div>
   `;
 
-  return col;
+  container.appendChild(col);
 }

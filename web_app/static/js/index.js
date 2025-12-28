@@ -2,6 +2,8 @@ import { createPaginatedTable } from "./elements/table.js";
 import { t, apiFetch } from "./utils.js";
 import { USERS_SCHEMA_ONLINE_VIEW } from "./schemas/schema_users.js";
 import { COMPANIES_SCHEMA_VIEW } from "./schemas/schema_companies.js";
+import { createDonutStat } from "./elements/donut_stat.js";
+import { createStatCard } from "./elements/card.js"
 
 // =====================================
 // Logout
@@ -67,21 +69,38 @@ async function loadUserStats() {
 
   const res = await apiFetch("/users/get_user_stats");
 
-  const card = document.createElement("div");
-  card.style.border = "1px solid #ccc";
-  card.style.borderRadius = "10px";
-  card.style.padding = "16px";
-  card.style.margin = "8px 0";
-  card.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
-  card.style.width = "250px";
+  const total = res.total_users ?? 0;
+  const online = res.online_users ?? 0;
 
-  card.innerHTML = `
-    <h3 class="mb-2">${t("User Statistics")}</h3>
-    <p><b>${t("Total Users")}:</b> ${res.total_users ?? "N/A"}</p>
-    <p><b>${t("Online Users")}:</b> ${res.online_users ?? "N/A"}</p>
-  `;
+  createDonutStat({
+    container,
+    title: t("Online Users"),
+    value: online,
+    total: total,
+    label: t("users online"),
+    color: "#28a745"
+  });
 
-  container.appendChild(card);
+
+  createStatCard({
+    container,
+    title: t("Orders made"),
+    value: 128,
+    badgeText: "+12%",
+    badgeColor: "success",
+    trendIcon: "ti ti-trending-up",
+    description: t("this week")
+  });
+
+  createStatCard({
+    container,
+    title: t("Items sold"),
+    value: 128,
+    badgeText: "+12%",
+    badgeColor: "success",
+    trendIcon: "ti ti-trending-up",
+    description: t("this week")
+  });
 }
 
 document.addEventListener("DOMContentLoaded", loadUserStats);

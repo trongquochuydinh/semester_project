@@ -26,7 +26,7 @@ export function createPaginatedTable({
 
     container.innerHTML = "";
 
-    createTable({
+    const card = createTable({
       title,
       element: container,
       schema,
@@ -34,20 +34,21 @@ export function createPaginatedTable({
       actions
     });
 
-    renderPagination(res.total);
+    renderPagination(res.total, card);
   }
 
-  function renderPagination(total) {
+  function renderPagination(total, card) {
     const totalPages = Math.ceil(total / pageSize);
+    if (totalPages <= 1) return; // 🔑 no pagination needed
 
-    let pagination = container.nextElementSibling;
-    if (!pagination || !pagination.classList.contains("pagination-controls")) {
-      pagination = document.createElement("div");
-      pagination.className = "pagination-controls mt-3 d-flex gap-1";
-      container.after(pagination);
+    let footer = card.querySelector(".card-footer");
+    if (!footer) {
+      footer = document.createElement("div");
+      footer.className = "card-footer d-flex gap-1 justify-content-end";
+      card.appendChild(footer);
     }
 
-    pagination.innerHTML = "";
+    footer.innerHTML = "";
 
     for (let i = 0; i < totalPages; i++) {
       const btn = document.createElement("button");
@@ -55,14 +56,12 @@ export function createPaginatedTable({
         i === currentPage ? "btn-primary" : "btn-outline-primary"
       }`;
       btn.textContent = i + 1;
-
       btn.onclick = () => loadPage(i);
 
-      pagination.appendChild(btn);
+      footer.appendChild(btn);
     }
   }
 
-  // initial load
   loadPage(0);
 }
 
@@ -76,48 +75,38 @@ export function createTable({
   const col = document.createElement("div");
   col.className = "col-12";
 
-  const header = `
+  col.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h5 class="mb-0">${title}</h5>
       ${schema.headerButton || ""}
     </div>
-  `;
 
-  const thead = `
-    <thead>
-      <tr>
-        ${schema.columns.map(c => `<th>${c.label}</th>`).join("")}
-      </tr>
-    </thead>
-  `;
-
-  const tbody = `
-    <tbody>
-    ${rows.map(row => {
-      return `
-        <tr>
-          ${schema.columns.map(c => {
-            if (c.key === "__actions__") return `<td>${actions(row)}</td>`;
-            if (c.render) return `<td>${c.render(row[c.key], row)}</td>`;
-            return `<td>${row[c.key] ?? "—"}</td>`;
-          }).join("")}
-        </tr>
-      `;
-    }).join("")}
-    </tbody>
-  `;
-
-  col.innerHTML = `
-    ${header}
     <div class="card tbl-card">
       <div class="card-body">
         <table class="table table-hover table-borderless mb-0">
-          ${thead}
-          ${tbody}
+          <thead>
+            <tr>
+              ${schema.columns.map(c => `<th>${c.label}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr>
+                ${schema.columns.map(c => {
+                  if (c.key === "__actions__") return `<td>${actions(row)}</td>`;
+                  if (c.render) return `<td>${c.render(row[c.key], row)}</td>`;
+                  return `<td>${row[c.key] ?? "—"}</td>`;
+                }).join("")}
+              </tr>
+            `).join("")}
+          </tbody>
         </table>
       </div>
     </div>
   `;
 
   element.appendChild(col);
+
+  // return card element so pagination can attach if needed
+  return col.querySelector(".card");
 }
