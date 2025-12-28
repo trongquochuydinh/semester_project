@@ -20,14 +20,15 @@ VALUES ('TechNova', 'Software Development');
 -- -------------------------
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    rank INT NOT NULL UNIQUE
 );
 
-INSERT INTO roles (name) VALUES
-('superadmin'),
-('admin'),
-('manager'),
-('employee');
+INSERT INTO roles (name, rank) VALUES
+('superadmin', 1),
+('admin', 2),
+('manager', 3),
+('employee', 4);
 
 -- -------------------------
 -- Users

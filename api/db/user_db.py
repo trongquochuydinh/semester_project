@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy.orm import Session, joinedload
-from api.models.user import User, Role
+from api.models.user import User
+from api.models.role import Role
 from datetime import datetime
 from typing import List
 
@@ -16,22 +17,23 @@ def edit_user(
     updates: dict,
     role_id: int,
 ) -> User:
-    
+
     EDITABLE_FIELDS = {
         "username",
         "email",
         "status",
-        "last_login",
     }
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return None
 
-    # Update allowed scalar fields only
     for key, value in updates.items():
         if key in EDITABLE_FIELDS:
             setattr(user, key, value)
+
+    # Apply role update explicitly
+    user.role_id = role_id
 
     db.flush()
     return user
@@ -58,15 +60,6 @@ def clear_login_session_by_user_id(db: Session, user_id: int):
     user = get_user_data_by_id(db, user_id)
     if user:
         clear_login_session(db, user)
-
-def get_role_by_id(db: Session, role_id: int):
-    return db.query(Role).filter_by(id=role_id).first()
-
-def get_id_by_role(db: Session, role):
-    return db.query(Role).filter(Role.name == role).first()
-
-def get_all_roles(db: Session):
-    return db.query(Role).all()
 
 def get_user_data_by_id(db: Session, user_id: int) -> User:
     return (

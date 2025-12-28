@@ -51,10 +51,18 @@ def get_me_endpoint(
 
 @router.get("/get_subroles", response_model=RolesResponse)
 def get_subroles_endpoint(
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    roles = get_subroles_for_role(current_user.role.name, excluded_roles=[current_user.role.name])
-    return RolesResponse(roles=[RoleOut(name=name) for name in roles])
+    roles = get_subroles_for_role(
+        db=db,
+        role_name=current_user.role.name,
+        excluded_roles=[current_user.role.name],
+    )
+
+    return RolesResponse(
+        roles=[RoleOut(name=role.name) for role in roles]
+    )
 
 @router.post("/create", response_model=UserCreateResponse)
 def create_user_endpoint(
@@ -66,11 +74,12 @@ def create_user_endpoint(
 
 @router.post("/edit_user/{user_id}", response_model=UserEditResponse)
 def edit_user_endpoint(
+    user_id: int,
     request : UserEditRequest, 
     db : Session = Depends(get_db),
     current_user : User = Depends(require_role(["superadmin", "admin", "manager"]))
 ):
-    return edit_user(request, db, current_user)
+    return edit_user(user_id, request, db, current_user)
 
 @router.get("/get/{user_id}", response_model=UserGetResponse)
 def get_user_endpoint(

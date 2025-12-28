@@ -1,20 +1,21 @@
 from fastapi import HTTPException
 from werkzeug.security import generate_password_hash
-from typing import List
 
 from api.db.user_db import (
     insert_user,
-    get_id_by_role,
     paginate_users as db_paginate_users,
     count_users as db_count_users,
-    get_user_data_by_id as db_get_user_data_by_id
+    get_user_data_by_id as db_get_user_data_by_id,
+    edit_user as db_edit_user
 )
+
 from api.services.company_service import assert_company_access
+from api.services.role_service import resolve_assignable_role, get_subroles_for_role
 
 from sqlalchemy.orm import Session
 from api.models.user import User
 from api.utils.auth_utils import generate_password
-from api.schemas import UserWriter, UserCreateResponse, UserCountResponse, UserGetResponse, PaginationResponse
+from api.schemas import UserWriter, UserCreateResponse, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse
 
 def create_user_account(data: UserWriter, db: Session, current_user: User) -> UserCreateResponse:
 
@@ -27,21 +28,11 @@ def create_user_account(data: UserWriter, db: Session, current_user: User) -> Us
     )
 
     # 2. Resolve role from DB FIRST
-    role = get_id_by_role(db, data.role)
-    if not role:
-        raise HTTPException(status_code=400, detail="Role not found")
-
-    # 3. Role permission check
-    available_roles = get_subroles_for_role(
-        current_user.role.name,
-        excluded_roles=[current_user.role.name],
+    role = resolve_assignable_role(
+        db=db,
+        role_name=data.role,
+        current_user=current_user,
     )
-
-    if role.name not in available_roles:
-        raise HTTPException(
-            status_code=403,
-            detail="You are not allowed to assign this role",
-        )
 
     # 4. Create user
     user_initial_password = generate_password()
@@ -63,15 +54,56 @@ def create_user_account(data: UserWriter, db: Session, current_user: User) -> Us
         initial_password=user_initial_password,
     )
 
-def edit_user(data: UserWriter, db: Session, current_user: User):
+def edit_user(
+    user_id: int,
+    data: UserWriter,
+    db: Session,
+    current_user: User,
+):
+    user = db_get_user_data_by_id(db, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
 
-    company = assert_company_access(
+    is_superadmin = current_user.role.name == "superadmin"
+
+    assert_company_access(
         db,
-        is_superadmin=(current_user.role.name == "superadmin"),
+        is_superadmin=is_superadmin,
         current_user_company_id=current_user.company_id,
-        company_id=data.company_id,
+        company_id=user.company_id,
     )
-    return None
+
+    role = resolve_assignable_role(
+        db=db,
+        role_name=data.role,
+        current_user=current_user,
+    )
+
+    if user.id == current_user.id and not is_superadmin:
+        if role.id != user.role_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You cannot change your own role",
+            )
+
+    updates = {
+        "username": data.username.strip(),
+        "email": data.email.lower().strip(),
+    }
+
+    updated_user = db_edit_user(
+        db=db,
+        user_id=user.id,
+        updates=updates,
+        role_id=role.id,
+    )
+
+    return UserEditResponse(
+        username=updated_user.username,
+        email=updated_user.email,
+        company_id=updated_user.company_id,
+        role=updated_user.role.name,
+    )
 
 def disable_user(data: UserWarning, db: Session, current_user: User):
     return None
@@ -96,28 +128,33 @@ def get_info_of_user(user_id: int, db: Session, current_user: User) -> UserGetRe
         role=user.role.name,
     )
 
-def get_subroles_for_role(role_name: str, excluded_roles: List[str]=None):
-    role_map = {
-        "superadmin": {"superadmin", "admin", "manager", "employee"},
-        "admin": {"admin", "manager", "employee"},
-        "manager": {"manager", "employee"},
-        "employee": {"employee"}
-    }
-
-    allowed_roles = role_map.get(role_name.lower(), set())
-
-    if excluded_roles:
-        excluded = {r.lower() for r in excluded_roles}
-        allowed_roles = allowed_roles - excluded
-    return allowed_roles
-
 # TODO: Make this more coherent 
-def paginate_users(db: Session, limit: int, offset: int, filters: dict, user_role: str, company_id: int):
+def paginate_users(
+    db: Session,
+    limit: int,
+    offset: int,
+    filters: dict,
+    user_role: str,
+    company_id: int,
+):
     if "status" in filters:
         allowed_roles = None
     else:
-        allowed_roles = get_subroles_for_role(user_role, excluded_roles=[user_role])
-    total, results = db_paginate_users(db, filters, allowed_roles, company_id, limit, offset)
+        roles = get_subroles_for_role(
+            db,
+            user_role,
+            excluded_roles=[user_role],
+        )
+        allowed_roles = {role.name for role in roles}
+
+    total, results = db_paginate_users(
+        db,
+        filters,
+        allowed_roles,
+        company_id,
+        limit,
+        offset,
+    )
 
     def serialize(u: User):
         d = {c.name: getattr(u, c.name) for c in u.__table__.columns}
@@ -126,12 +163,10 @@ def paginate_users(db: Session, limit: int, offset: int, filters: dict, user_rol
         d["company_name"] = u.company.name if u.company else None
         return d
 
-    res = PaginationResponse(
+    return PaginationResponse(
         total=total,
-        data=[serialize(r) for r in results]
+        data=[serialize(r) for r in results],
     )
-
-    return res
 
 def get_user_count(db: Session, current_user: User) -> UserCountResponse:
     is_superadmin = current_user.role.name == "superadmin"
