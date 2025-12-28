@@ -16186,6 +16186,17 @@ pre[class*=language-] > code {
   height: calc(100vh - 60px);
   padding: 10px 0;
 }
+.pc-sidebar .navbar-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.pc-sidebar .pc-navbar {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
 .pc-sidebar .card {
   box-shadow: var(--bs-card-box-shadow);
   margin: 15px;

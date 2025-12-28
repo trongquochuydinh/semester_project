@@ -57,32 +57,26 @@
                         </a>
                     </li>
 
-                    {% if role == 'superadmin' or role == 'admin' or role == 'manager' %}
+                    {# =========================
+                    Management section
+                    ========================= #}
+
+                    {% if role in ['superadmin', 'admin', 'manager'] %}
                         <li class="pc-item pc-caption">
                             <label>Management</label>
                             <i class="ti ti-dashboard"></i>
-                        </li>     
+                        </li>
 
+                        {# --- Users (superadmin, admin, manager) --- #}
                         <li class="pc-item">
                             <a href="/users/management" class="pc-link">
                                 <span class="pc-micon"><i class="ti ti-user"></i></span>
                                 <span class="pc-mtext">Users</span>
                             </a>
                         </li>
-                        {% if role == 'admin' or role == 'manager' %}
-                            <li class="pc-item">
-                                <a href="/items/management" class="pc-link">
-                                    <span class="pc-micon"><i class="ti ti-list"></i></span>
-                                    <span class="pc-mtext">Items</span>
-                                </a>
-                            </li>     
-                            <li class="pc-item">
-                                <a href="/orders/management" class="pc-link">
-                                    <span class="pc-micon"><i class="ti ti-clipboard"></i></span>
-                                    <span class="pc-mtext">Orders</span>
-                                </a>
-                            </li>                   
-                        {% elif role == 'superadmin' %}
+
+                        {# --- superadmin only --- #}
+                        {% if role == 'superadmin' %}
                             <li class="pc-item">
                                 <a href="/companies/management" class="pc-link">
                                     <span class="pc-micon"><i class="ti ti-building"></i></span>
@@ -90,9 +84,27 @@
                                 </a>
                             </li>
                         {% endif %}
+
+                        {# --- admin & manager only --- #}
+                        {% if role in ['admin', 'manager'] %}
+                            <li class="pc-item">
+                                <a href="/items/management" class="pc-link">
+                                    <span class="pc-micon"><i class="ti ti-list"></i></span>
+                                    <span class="pc-mtext">Items</span>
+                                </a>
+                            </li>
+
+                            <li class="pc-item">
+                                <a href="/orders/management" class="pc-link">
+                                    <span class="pc-micon"><i class="ti ti-clipboard"></i></span>
+                                    <span class="pc-mtext">Orders</span>
+                                </a>
+                            </li>
+                        {% endif %}
                     {% endif %}
-                    <li>
-                        <form action="/set_language" method="get" style="padding: 1rem; margin-top: 55vh;">
+
+                    <li style="margin-top: auto;">
+                        <form action="/set_language" method="get" style="padding: 1rem;">
                             <select class="form-control" name="lang" onchange="this.form.submit()">
                                 <option value="en" {% if g.lang == 'en' %}selected{% endif %}>English</option>
                                 <option value="cz" {% if g.lang == 'cz' %}selected{% endif %}>Čeština</option>
