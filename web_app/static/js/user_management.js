@@ -21,28 +21,15 @@ document.addEventListener("DOMContentLoaded", () => {
     new bootstrap.Modal(modalEl).show();
   });
 
-  registerAction("disable-user", async (userId) => {
-    const data = await apiFetch(`/users/disable/${userId}`, {
+  registerAction("toggle-user", async (userId) => {
+    const data = await apiFetch(`/users/toggle_user_is_active/${userId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userId)
     });
 
-    if (!data.success) {
-      alert(data.message);
-    }
-  });
-
-  registerAction("enable-user", async (userId) => {
-    const data = await apiFetch(`/users/enable/${userId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(userId)
-    });
-
-    if (!data.success) {
-      alert(data.message);
-    }
+    alert(data.message);
+    location.reload();
   });
 
   const container = document.getElementById("users-table");
@@ -70,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <button 
             class="btn btn-sm ${isDisabled ? "btn-outline-success" : "btn-outline-danger"} ms-2"
-            data-action="${isDisabled ? "enable-user" : "disable-user"}"
+            data-action="toggle-user"
             data-id="${row.id}">
             ${isDisabled ? "Enable" : "Disable"}
           </button>

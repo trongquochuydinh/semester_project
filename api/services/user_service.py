@@ -106,13 +106,8 @@ def edit_user(
         role=updated_user.role.name,
     )
 
-def disable_user(user_id: int, db: Session, current_user: User) -> MessageResponse:
+def toggle_user_is_active(user_id: int, db: Session, current_user: User) -> MessageResponse:
     user = db_get_user_data_by_id(db, user_id)
-
-    if user.is_active == False:
-        return MessageResponse(
-            message="User is already disabled."
-        )
 
     assert_company_access(
         db,
@@ -127,13 +122,13 @@ def disable_user(user_id: int, db: Session, current_user: User) -> MessageRespon
         current_user=current_user,
     )
 
-    db_change_user_is_active(user, False)
+    is_active = not user.is_active
 
-    res = MessageResponse(
-        message="User was successfully disabled."
+    db_change_user_is_active(user, is_active)
+
+    return MessageResponse(
+        message=f"User was successfully {'enabled' if is_active else 'disabled'}."
     )
-
-    return res
 
 def get_info_of_user(user_id: int, db: Session, current_user: User) -> UserGetResponse:
     user = db_get_user_data_by_id(db, user_id)

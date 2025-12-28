@@ -42,6 +42,13 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=401)
 
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="User disabled")
+
+    token_session_id = payload.get("session_id")
+    if not token_session_id or user.session_id != token_session_id:
+        raise HTTPException(status_code=401, detail="Session expired")
+
     return user
 
 def require_role(required_roles: List[str]):

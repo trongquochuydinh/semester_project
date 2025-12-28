@@ -7,7 +7,7 @@ from web_app.api_clients.users_client import(
     get_user as proxy_get_user, 
     get_my_data as proxy_get_my_data,
     edit_user as proxy_edit_user,
-    disable_user as proxy_disable_user,
+    toggle_user_is_active as proxy_toggle_user_is_active,
     paginate_user as proxy_paginate_user
 )
 
@@ -50,10 +50,10 @@ def edit_user(user_id):
     data = request.get_json()
     return proxy_edit_user(user_id, data)
 
-@users_bp.route("/disable/<int:user_id>", methods=["POST"])
+@users_bp.route("/toggle_user_is_active/<int:user_id>", methods=["POST"])
 @token_required
 def disable_user(user_id):
-    return proxy_disable_user(user_id)
+    return proxy_toggle_user_is_active(user_id)
 
 @users_bp.route("/paginate", methods=["POST"])
 @token_required
