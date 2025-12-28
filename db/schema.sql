@@ -100,18 +100,30 @@ CREATE TABLE items (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     sku TEXT NOT NULL,
-    quantity INT DEFAULT 0,
-    price NUMERIC(10,2),
-    company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE
+    price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
+    quantity INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP
 );
+
+CREATE UNIQUE INDEX uniq_company_sku ON items(company_id, sku);
 
 -- -------------------------
 -- Orders
 -- -------------------------
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
-    status TEXT DEFAULT 'pending',
+
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'completed', 'cancelled')),
+
     created_at TIMESTAMP DEFAULT now(),
+    completed_at TIMESTAMP,
 
     user_id INT NOT NULL REFERENCES users(id),
     company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE
@@ -122,7 +134,40 @@ CREATE TABLE orders (
 -- -------------------------
 CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
+
     order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-    quantity INT NOT NULL
+    item_id INT NOT NULL REFERENCES items(id),
+
+    quantity INT NOT NULL CHECK (quantity > 0),
+    unit_price NUMERIC(10,2) NOT NULL CHECK (unit_price >= 0)
 );
+
+-- =========================
+-- Seed items
+-- =========================
+
+INSERT INTO items (name, sku, price, quantity, company_id)
+VALUES
+('Laptop Dell XPS 13', 'XPS13-2024', 38999.00, 15, 1),
+('Mechanical Keyboard', 'KEY-MECH-01', 2999.00, 40, 1),
+('27" Monitor', 'MON-27-4K', 8499.00, 20, 1),
+('USB-C Docking Station', 'DOCK-USBC-02', 4299.00, 25, 1),
+('Wireless Mouse', 'MOUSE-WL-01', 1299.00, 60, 1);
+
+-- =========================
+-- Create order
+-- =========================
+
+INSERT INTO orders (user_id, company_id)
+VALUES (4, 1);
+
+-- =========================
+-- Add order items
+-- =========================
+
+INSERT INTO order_items (order_id, item_id, quantity, unit_price)
+VALUES
+(1, 1, 1, 38999.00),  -- 1x Laptop
+(1, 2, 2, 2999.00),   -- 2x Keyboard
+(1, 5, 1, 1299.00);   -- 1x Mouse
+

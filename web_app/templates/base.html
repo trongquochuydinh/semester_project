@@ -69,7 +69,20 @@
                                 <span class="pc-mtext">Users</span>
                             </a>
                         </li>
-                        {% if role == 'superadmin' %}
+                        {% if role == 'admin' or role == 'manager' %}
+                            <li class="pc-item">
+                                <a href="/items/management" class="pc-link">
+                                    <span class="pc-micon"><i class="ti ti-list"></i></span>
+                                    <span class="pc-mtext">Items</span>
+                                </a>
+                            </li>     
+                            <li class="pc-item">
+                                <a href="/orders/management" class="pc-link">
+                                    <span class="pc-micon"><i class="ti ti-clipboard"></i></span>
+                                    <span class="pc-mtext">Orders</span>
+                                </a>
+                            </li>                   
+                        {% elif role == 'superadmin' %}
                             <li class="pc-item">
                                 <a href="/companies/management" class="pc-link">
                                     <span class="pc-micon"><i class="ti ti-building"></i></span>
