@@ -4,6 +4,7 @@ import { registerAction } from "./elements/action.js";
 import { createFormModal } from "./elements/modal.js";
 import { CREATE_USER_MODAL } from "./modals/modal_user_create.js";
 import { EDIT_USER_MODAL } from "./modals/modal_user_edit.js";
+import { apiFetch } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   createFormModal(CREATE_USER_MODAL);
@@ -20,6 +21,30 @@ document.addEventListener("DOMContentLoaded", () => {
     new bootstrap.Modal(modalEl).show();
   });
 
+  registerAction("disable-user", async (userId) => {
+    const data = await apiFetch(`/users/disable/${userId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userId)
+    });
+
+    if (!data.success) {
+      alert(data.message);
+    }
+  });
+
+  registerAction("enable-user", async (userId) => {
+    const data = await apiFetch(`/users/enable/${userId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userId)
+    });
+
+    if (!data.success) {
+      alert(data.message);
+    }
+  });
+
   const container = document.getElementById("users-table");
 
   if (container) {
@@ -32,21 +57,25 @@ document.addEventListener("DOMContentLoaded", () => {
       filters: {
         include_self: false   // management view
       },
-      actions: (row) => `
-        <button 
-          class="btn btn-sm btn-outline-primary"
-          data-action="edit-user" 
-          data-id="${row.id}">
-          Edit
-        </button>
+      actions: (row) => {
+        const isDisabled = row.is_active === false;
 
-        <button 
-          class="btn btn-sm btn-outline-danger ms-2"
-          data-action="delete-user" 
-          data-id="${row.id}">
-          Delete
-        </button>
-      `
+        return `
+          <button 
+            class="btn btn-sm btn-outline-primary"
+            data-action="edit-user" 
+            data-id="${row.id}">
+            Edit
+          </button>
+
+          <button 
+            class="btn btn-sm ${isDisabled ? "btn-outline-success" : "btn-outline-danger"} ms-2"
+            data-action="${isDisabled ? "enable-user" : "disable-user"}"
+            data-id="${row.id}">
+            ${isDisabled ? "Enable" : "Disable"}
+          </button>
+        `;
+      }
     });
   }
 });

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from api.db.db_engine import Base
 
@@ -11,6 +11,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
 
     status = Column(String, default="offline", nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
     last_login = Column(DateTime, nullable=True)
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)

@@ -18,6 +18,7 @@ from api.services import (
     get_user_count, 
     get_info_of_user,
     edit_user,
+    disable_user,
     paginate_users
 )
 
@@ -88,6 +89,14 @@ def get_user_endpoint(
     current_user: User = Depends(require_role(["superadmin", "admin", "manager"]))
 ):
     return get_info_of_user(user_id, db, current_user)
+
+@router.post("/disable/{user_id}", response_model=MessageResponse)
+def get_user_endpoint(
+    user_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["superadmin", "admin", "manager"]))
+):
+    return disable_user(user_id, db, current_user)
 
 @router.get("/get_user_stats", response_model=UserCountResponse)
 def get_user_stats_endpoint(

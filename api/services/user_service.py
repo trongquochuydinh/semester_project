@@ -6,7 +6,8 @@ from api.db.user_db import (
     paginate_users as db_paginate_users,
     count_users as db_count_users,
     get_user_data_by_id as db_get_user_data_by_id,
-    edit_user as db_edit_user
+    edit_user as db_edit_user,
+    change_user_is_active as db_change_user_is_active
 )
 
 from api.services.company_service import assert_company_access
@@ -15,7 +16,7 @@ from api.services.role_service import resolve_assignable_role, get_subroles_for_
 from sqlalchemy.orm import Session
 from api.models.user import User
 from api.utils.auth_utils import generate_password
-from api.schemas import UserWriter, UserCreateResponse, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse
+from api.schemas import UserWriter, UserCreateResponse, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse, MessageResponse
 
 def create_user_account(data: UserWriter, db: Session, current_user: User) -> UserCreateResponse:
 
@@ -105,8 +106,34 @@ def edit_user(
         role=updated_user.role.name,
     )
 
-def disable_user(data: UserWarning, db: Session, current_user: User):
-    return None
+def disable_user(user_id: int, db: Session, current_user: User) -> MessageResponse:
+    user = db_get_user_data_by_id(db, user_id)
+
+    if user.is_active == False:
+        return MessageResponse(
+            message="User is already disabled."
+        )
+
+    assert_company_access(
+        db,
+        is_superadmin=(current_user.role.name == "superadmin"),
+        current_user_company_id=current_user.company_id,
+        company_id=user.company_id,
+    )
+
+    role = resolve_assignable_role(
+        db=db,
+        role_name=user.role.name,
+        current_user=current_user,
+    )
+
+    db_change_user_is_active(user, False)
+
+    res = MessageResponse(
+        message="User was successfully disabled."
+    )
+
+    return res
 
 def get_info_of_user(user_id: int, db: Session, current_user: User) -> UserGetResponse:
     user = db_get_user_data_by_id(db, user_id)

@@ -105,6 +105,15 @@ def edit_user(user_id, data):
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
     
+def disable_user(user_id):
+    """Disable user via API."""
+    try:
+        res = api_post(f"/api/users/disable/{user_id}")
+        return res.json()
+
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code
+
 def paginate_user(data):
     res = api_post("/api/users/paginate", data)
     return (res.text, res.status_code, res.headers.items())

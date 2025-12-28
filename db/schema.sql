@@ -39,7 +39,8 @@ CREATE TABLE users (
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
 
-    status TEXT DEFAULT 'offline',
+    status TEXT NOT NULL DEFAULT 'offline',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     last_login TIMESTAMP,
 
     session_id TEXT, 

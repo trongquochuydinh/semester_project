@@ -38,28 +38,32 @@ def edit_user(
     db.flush()
     return user
 
-def change_user_status(db: Session, user: User, status: str):
+def change_user_status(user: User, status: str):
     user.status = status
     if status == "online":
         user.last_login = datetime.now()
     
-def establish_login_session(db: Session, user: User) -> str:
+def change_user_is_active(user: User, is_active: bool):
+    user.is_active = is_active
+    clear_login_session(user)
+
+def establish_login_session(user: User) -> str:
     if user.session_id is not None:
         raise UserAlreadyLoggedInError()
 
     session_id = str(uuid.uuid4())
     user.session_id = session_id
-    change_user_status(db, user, "online")
+    change_user_status(user, "online")
     return session_id
 
-def clear_login_session(db: Session, user: User):
+def clear_login_session(user: User):
     user.session_id = None
-    change_user_status(db, user, "offline")
+    change_user_status(user, "offline")
 
 def clear_login_session_by_user_id(db: Session, user_id: int):
     user = get_user_data_by_id(db, user_id)
     if user:
-        clear_login_session(db, user)
+        clear_login_session(user)
 
 def get_user_data_by_id(db: Session, user_id: int) -> User:
     return (
