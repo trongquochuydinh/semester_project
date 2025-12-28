@@ -49,8 +49,6 @@ export const EDIT_USER_MODAL = {
         </div>
       `);
 
-      setTimeout(() => location.reload(), 1500);
-
     } catch (err) {
       console.error(err);
       writeResult(

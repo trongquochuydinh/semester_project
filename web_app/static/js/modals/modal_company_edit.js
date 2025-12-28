@@ -58,8 +58,6 @@ export const EDIT_COMPANY_MODAL = {
         </div>
       `);
 
-      setTimeout(() => location.reload(), 1500);
-
     } catch (err) {
       console.error(err);
       writeResult(

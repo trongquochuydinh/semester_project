@@ -6,6 +6,12 @@ import { CREATE_USER_MODAL } from "./modals/modal_user_create.js";
 import { EDIT_USER_MODAL } from "./modals/modal_user_edit.js";
 import { apiFetch } from "./utils.js";
 
+document.addEventListener("hidden.bs.modal", (e) => {
+  if (e.target.dataset.reloadOnClose === "true") {
+    location.reload();
+  }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   createFormModal(CREATE_USER_MODAL);
   createFormModal(EDIT_USER_MODAL);
