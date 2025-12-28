@@ -6,16 +6,31 @@ import { CREATE_USER_MODAL } from "./modals/modal_user_create.js";
 import { EDIT_USER_MODAL } from "./modals/modal_user_edit.js";
 import { apiFetch } from "./utils.js";
 
-document.addEventListener("hidden.bs.modal", (e) => {
-  if (e.target.dataset.reloadOnClose === "true") {
-    location.reload();
-  }
-});
-
 document.addEventListener("DOMContentLoaded", () => {
+  // -----------------------------------
+  // Create modals
+  // -----------------------------------
   createFormModal(CREATE_USER_MODAL);
   createFormModal(EDIT_USER_MODAL);
 
+  // -----------------------------------
+  // Attach reload-on-close listeners
+  // (Option 1 – reliable)
+  // -----------------------------------
+  const createModal = document.getElementById("createUserModal");
+  const editModal = document.getElementById("editUserModal");
+
+  createModal?.addEventListener("hidden.bs.modal", () => {
+    location.reload();
+  });
+
+  editModal?.addEventListener("hidden.bs.modal", () => {
+    location.reload();
+  });
+
+  // -----------------------------------
+  // Actions
+  // -----------------------------------
   registerAction("open-create-user-modal", () => {
     const modalEl = document.getElementById("createUserModal");
     new bootstrap.Modal(modalEl).show();
@@ -38,6 +53,9 @@ document.addEventListener("DOMContentLoaded", () => {
     location.reload();
   });
 
+  // -----------------------------------
+  // Users table
+  // -----------------------------------
   const container = document.getElementById("users-table");
 
   if (container) {
@@ -48,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tableName: "users",
       pageSize: 5,
       filters: {
-        include_self: false   // management view
+        include_self: false // management view
       },
       actions: (row) => {
         const isDisabled = row.is_active === false;

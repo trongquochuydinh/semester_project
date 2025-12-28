@@ -92,6 +92,10 @@ def edit_user(
         "email": data.email.lower().strip(),
     }
 
+    if is_superadmin:
+        updates["company_id"] = data.company_id
+
+
     updated_user = db_edit_user(
         db=db,
         user_id=user.id,

@@ -21,7 +21,7 @@ def edit_user(
     EDITABLE_FIELDS = {
         "username",
         "email",
-        "status",
+        "company_id"
     }
 
     user = db.query(User).filter(User.id == user_id).first()
