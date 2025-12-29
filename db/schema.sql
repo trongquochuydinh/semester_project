@@ -105,10 +105,7 @@ CREATE TABLE items (
 
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
-    company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP
+    company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX uniq_company_sku ON items(company_id, sku);
@@ -121,7 +118,8 @@ CREATE TABLE orders (
 
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN ('pending', 'completed', 'cancelled')),
-
+    order_type TEXT NOT NULL
+        CHECK (order_type IN ('sale', 'restock')),
     created_at TIMESTAMP DEFAULT now(),
     completed_at TIMESTAMP,
 
@@ -158,16 +156,33 @@ VALUES
 -- Create order
 -- =========================
 
-INSERT INTO orders (user_id, company_id)
-VALUES (4, 1);
+INSERT INTO orders (
+    user_id,
+    company_id,
+    order_type,
+    status,
+    completed_at
+)
+VALUES (
+    4,          -- employee
+    1,          -- TechNova
+    'sale',
+    'completed',
+    now()
+);
 
 -- =========================
 -- Add order items
 -- =========================
 
-INSERT INTO order_items (order_id, item_id, quantity, unit_price)
-VALUES
-(1, 1, 1, 38999.00),  -- 1x Laptop
-(1, 2, 2, 2999.00),   -- 2x Keyboard
-(1, 5, 1, 1299.00);   -- 1x Mouse
 
+INSERT INTO order_items (
+    order_id,
+    item_id,
+    quantity,
+    unit_price
+)
+VALUES
+(1, 1, 1, 38999.00),  -- 1× Laptop
+(1, 2, 2, 2999.00),   -- 2× Keyboard
+(1, 5, 1, 1299.00);   -- 1× Mouse

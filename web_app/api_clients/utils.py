@@ -60,7 +60,7 @@ def login_required(view_func):
     @wraps(view_func)
     def wrapper(*args, **kwargs):
         if session.get("user") is None and session.get("token") is None:
-            return render_template("login.html")
+            return render_template("auth_views/login.html")
         return view_func(*args, **kwargs)
     return wrapper
 

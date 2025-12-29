@@ -1,0 +1,13 @@
+{% extends "base_views/base.html" %}
+
+{% block title %}Orders Management{% endblock %}
+
+{% block content %}
+<div id="orders-table"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/elements/table.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/elements/modal.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/management/orders_management.js') }}"></script>
+{% endblock %}

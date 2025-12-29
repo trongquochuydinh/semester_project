@@ -6,8 +6,8 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/')
 def home():
     if session.get('user') is None:
-        return render_template('login.html')
-    return render_template('index.html')
+        return render_template('auth_views/login.html')
+    return render_template('base_views/index.html')
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -24,4 +24,4 @@ def logout():
         except Exception as e:
             print(f"Error updating user status: {e}")
     session.clear()
-    return render_template('login.html')
+    return render_template('auth_views/login.html')

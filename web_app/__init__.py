@@ -28,11 +28,13 @@ from web_app.routes.context import context_bp
 from web_app.routes.auth import auth_bp
 from web_app.routes.users import users_bp
 from web_app.routes.companies import companies_bp
+from web_app.routes.items import items_bp
 
 app.register_blueprint(context_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
 app.register_blueprint(companies_bp)
+app.register_blueprint(items_bp)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)

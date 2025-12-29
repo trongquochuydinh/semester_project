@@ -13,7 +13,7 @@ companies_bp = Blueprint('companies', __name__, url_prefix='/companies')
 @login_required
 def company_management():
     if session.get('user') is None:
-        return render_template('login.html')
+        return render_template('auth_views/login.html')
     return render_template('management_views/company_management.html')
 
 @companies_bp.route('/create', methods=['POST'])

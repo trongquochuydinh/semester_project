@@ -64,6 +64,7 @@ def clear_login_session_by_user_id(db: Session, user_id: int):
     user = get_user_data_by_id(db, user_id)
     if user:
         clear_login_session(user)
+        db.commit() 
 
 def get_user_data_by_id(db: Session, user_id: int) -> User:
     return (
