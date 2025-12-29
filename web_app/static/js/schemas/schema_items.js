@@ -7,8 +7,6 @@ export const ITEMS_SCHEMA_MANAGE = {
     { key: "quantity", label: "Quantity" },
     { key: "is_active", label: "Status" },
     { key: "company_name", label: "Company" },
-    { key: "create_at", label: "Created at" },
-    { key: "updated_at", label: "Updated at" },
     { key: "__actions__", label: "Actions" }
   ],
   headerButton: `
