@@ -33,6 +33,14 @@ export const EDIT_COMPANY_MODAL = {
     const modal = document.getElementById("editCompanyModal");
     const companyId = modal.dataset.companyId;
 
+    const inputs = modal.querySelectorAll("input");
+    for (const input of inputs) {
+        if (!input.checkValidity()) {
+        input.reportValidity();
+        return;
+        }
+    }
+
     const payload = {
       company_name: modal.querySelector("#company_name").value,
       field: modal.querySelector("#field").value

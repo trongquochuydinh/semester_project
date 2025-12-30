@@ -9,6 +9,14 @@ export const CREATE_ITEM_MODAL = {
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("createItemModal");
 
+    const inputs = modal.querySelectorAll("input");
+    for (const input of inputs) {
+        if (!input.checkValidity()) {
+        input.reportValidity();
+        return;
+        }
+    }
+
     const payload = {
       name: modal.querySelector("#name").value,
       price: modal.querySelector("#price").value,

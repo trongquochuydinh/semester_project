@@ -22,6 +22,14 @@ export const EDIT_USER_MODAL = {
     const modal = document.getElementById("editUserModal");
     const userId = modal.dataset.userId;
 
+    const inputs = modal.querySelectorAll("input");
+    for (const input of inputs) {
+        if (!input.checkValidity()) {
+        input.reportValidity();
+        return;
+        }
+    }
+
     const payload = {
       username: modal.querySelector("#username").value,
       email: modal.querySelector("#email").value,

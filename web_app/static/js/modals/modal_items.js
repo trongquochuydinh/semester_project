@@ -2,7 +2,7 @@ export const BASE_ITEM_MODAL = {
   fields: [
     {
       label: "Name",
-      html: `<input id="name" class="form-control">`
+      html: `<input id="name" class="form-control" required>`
     },
     {
       label: "Price",
@@ -13,6 +13,7 @@ export const BASE_ITEM_MODAL = {
           class="form-control"
           min="0"
           step="0.01"
+          required
         >
       `
     },
@@ -25,6 +26,7 @@ export const BASE_ITEM_MODAL = {
           class="form-control"
           min="0"
           step="1"
+          required
         >
       `
     },

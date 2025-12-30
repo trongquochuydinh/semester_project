@@ -21,22 +21,11 @@ from api.services import (
     assert_company_access
 )
 
+from api.utils import validate_item_data
+
 def create_item(data: ItemCreationRequest, db: Session, current_user: User) -> MessageResponse:
-    # --------------------
-    # Required fields
-    # --------------------
-    name = data.get("name")
-    if not name:
-        raise HTTPException(400, "Item name is required")
+    name, price, quantity = validate_item_data(data)
 
-    # --------------------
-    # Validate numbers
-    # --------------------
-    price, quantity = validate_item_numbers(data)
-
-    # --------------------
-    # Generate SKU
-    # --------------------
     sku = generate_sku(name)
 
     item = Item(
@@ -67,10 +56,13 @@ def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: Us
         company_id=item.company_id,
     )
 
+    # 🔒 normalize + validate
+    name, price, quantity = validate_item_data(data)
+
     updates = {
-        "name": data.name.strip(),
-        "price": data.price,
-        "quantity": data.quantity
+        "name": name,
+        "price": price,
+        "quantity": quantity,
     }
 
     updated_item = db_edit_item(
@@ -103,25 +95,6 @@ def get_info_of_item(item_id: int, db: Session, current_user: User):
         price=item.price,
         quantity=item.quantity
     )
-
-def validate_item_numbers(data: dict):
-    try:
-        price = Decimal(data.get("price"))
-    except Exception:
-        raise HTTPException(400, "Invalid price")
-
-    try:
-        quantity = int(data.get("quantity"))
-    except Exception:
-        raise HTTPException(400, "Invalid quantity")
-
-    if price < 0:
-        raise HTTPException(400, "Price must be >= 0")
-
-    if quantity < 0:
-        raise HTTPException(400, "Quantity must be >= 0")
-
-    return price, quantity
 
 def generate_sku(name: str) -> str:
     base = re.sub(r"[^A-Z0-9]", "", name.upper())

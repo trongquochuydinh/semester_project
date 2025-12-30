@@ -10,6 +10,14 @@ export const CREATE_COMPANY_MODAL = {
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("createCompanyModal");
 
+    const inputs = modal.querySelectorAll("input");
+    for (const input of inputs) {
+        if (!input.checkValidity()) {
+        input.reportValidity();
+        return;
+        }
+    }
+
     const payload = {
       company_name: modal.querySelector("#company_name").value,
       field: modal.querySelector("#field").value

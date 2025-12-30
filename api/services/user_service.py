@@ -17,7 +17,7 @@ from api.services.role_service import resolve_assignable_role, get_subroles_for_
 
 from sqlalchemy.orm import Session
 from api.models.user import User
-from api.utils.auth_utils import generate_password
+from api.utils import generate_password, validate_user_data
 from api.schemas import UserWriter, UserCreateResponse, UserCreateRequest, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse, MessageResponse, UserEditRequest
 
 def create_user_account(data: UserCreateRequest, db: Session, current_user: User) -> UserCreateResponse:
@@ -191,7 +191,6 @@ def get_info_of_user(user_id: int, db: Session, current_user: User) -> UserGetRe
         role=user.role.name,
     )
 
-# TODO: Make this more coherent 
 def paginate_users(
     db: Session,
     limit: int,
@@ -243,39 +242,3 @@ def get_user_count(db: Session, current_user: User) -> UserCountResponse:
         online_users=online,
     )
         
-def validate_user_data(data: UserWriter):
-    username = normalize_string(data.username, "Username")
-    email = normalize_string(data.email, "Email").lower()
-    role_name = normalize_string(data.role, "Role")
-
-    if not username:
-        raise HTTPException(400, "Username is required")
-
-    if not email:
-        raise HTTPException(400, "Email is required")
-
-    if not role_name:
-        raise HTTPException(400, "Role is required")
-
-    if not data.company_id:
-        raise HTTPException(400, "Company is required")
-    
-    if not is_valid_email(email):
-        raise HTTPException(400, "Invalid email format")
-
-def normalize_string(value: str, field_name: str) -> str:
-    if value is None:
-        raise HTTPException(400, f"{field_name} is required")
-
-    if not isinstance(value, str):
-        raise HTTPException(400, f"{field_name} must be a string")
-
-    value = value.strip()
-    if not value:
-        raise HTTPException(400, f"{field_name} cannot be empty")
-
-    return value
-
-def is_valid_email(email: str) -> bool:
-    name, addr = parseaddr(email)
-    return "@" in addr

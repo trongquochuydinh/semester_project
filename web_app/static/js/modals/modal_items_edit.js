@@ -31,8 +31,16 @@ export const EDIT_ITEM_MODAL = {
 
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("editItemModal");
+    
     const itemId = modal.dataset.itemId;
 
+    const inputs = modal.querySelectorAll("input");
+    for (const input of inputs) {
+        if (!input.checkValidity()) {
+        input.reportValidity();
+        return;
+        }
+    }
     const payload = {
       name: modal.querySelector("#name").value,
       price: modal.querySelector("#price").value,
