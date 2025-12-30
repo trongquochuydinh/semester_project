@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from typing import List
 
 from requests import Session
-from api.db.db_engine import SessionLocal, get_db
-from api.dependencies import require_role
+from api.db.db_engine import SessionLocal
+from api.dependencies import require_role, get_db
 from api.models.company import Company
 from api.models.user import User
 from api.schemas import(

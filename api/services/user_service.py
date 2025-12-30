@@ -16,7 +16,7 @@ from api.services.role_service import resolve_assignable_role, get_subroles_for_
 from sqlalchemy.orm import Session
 from api.models.user import User
 from api.utils.auth_utils import generate_password
-from api.schemas import UserWriter, UserCreateResponse, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse, MessageResponse
+from api.schemas import UserWriter, UserCreateResponse, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse, MessageResponse, UserEditRequest
 
 def create_user_account(data: UserWriter, db: Session, current_user: User) -> UserCreateResponse:
 
@@ -57,7 +57,7 @@ def create_user_account(data: UserWriter, db: Session, current_user: User) -> Us
 
 def edit_user(
     user_id: int,
-    data: UserWriter,
+    data: UserEditRequest,
     db: Session,
     current_user: User,
 ):

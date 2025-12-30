@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from api.db.db_engine import get_db
+from api.dependencies.db import get_db
 from api.models.user import User
 from api.utils import decode_access_token, decode_token_ignore_exp, InvalidTokenError, TokenExpiredError
 from api.db.user_db import get_user_data_by_id, clear_login_session_by_user_id

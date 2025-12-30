@@ -28,15 +28,3 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=DB)
 
 # Base class for models
 Base = declarative_base()
-
-# Dependency for FastAPI
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-        db.commit()
-    except:
-        db.rollback()
-        raise
-    finally:
-        db.close()

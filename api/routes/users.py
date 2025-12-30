@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from api.dependencies import get_current_user, require_role
-from api.db.db_engine import get_db
+from api.dependencies import get_current_user, require_role, get_db
 from api.models.user import User
 from api.schemas import (
     LoginRequest, LoginResponse, 

@@ -1,23 +1,26 @@
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from typing import List
+from fastapi import APIRouter, Body, Depends
 
-from requests import Session
-from api.db.db_engine import SessionLocal, get_db
-from api.dependencies import get_current_user
-from api.models.company import Company
+from sqlalchemy.orm import Session
+from api.dependencies import get_current_user, require_role, get_db
 from api.models.user import User
 from api.schemas import(
-    CompanyCreate,
-    PaginationRequest
+    PaginationRequest,
+    ItemCreationRequest,
+    ItemEditRequest,
+    ItemEditResponse
 )
 
-from api.services import paginate_items
+from api.services import (
+    create_item,
+    edit_item,
+    get_info_of_item,
+    paginate_items
+)
 
 router = APIRouter(prefix="/api/items", tags=["items"])
 
 @router.post("/paginate")
-def paginate_companies_endpoint(
+def paginate_items_endpoint(
     request: PaginationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -29,3 +32,48 @@ def paginate_companies_endpoint(
         filters=request.filters,
         company_id=current_user.company_id,
     )
+
+@router.post("/create")
+def create_item_endpoint(
+    request: ItemCreationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "manager"]))
+):
+    return create_item(request, db, current_user)
+
+@router.post("/edit/{item_id}")
+def edit_item_endpoint(
+    item_id: int,
+    request: ItemEditRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "manager"]))
+):
+    return edit_item(item_id, request, db, current_user)
+
+@router.post("/toggle_item_is_active/{item_id}")
+def toggle_item_is_active_endpoint():
+    return
+
+@router.get("/get/{item_id}")
+def get_item_endpoint(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "manager"]))
+):
+    return get_info_of_item(item_id, db, current_user)
+
+@router.get("/popular_items")
+def get_most_sold_items_endpoint():
+    return
+
+@router.get("/unpopular_items")
+def get_least_sold_items_endpoint():
+    return
+
+@router.get("/get_items_stock")
+def get_items_stock_endpoint():
+    return
+
+@router.get("/num_of_items_sold_this_week")
+def get_num_of_items_sold_this_week_endpoint():
+    return

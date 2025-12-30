@@ -1,7 +1,7 @@
 export const ITEMS_SCHEMA_MANAGE = {
   columns: [
     { key: "id", label: "ID" },
-    { key: "name", label: "Company" },
+    { key: "name", label: "Name" },
     { key: "sku", label: "SKU" },
     { key: "price", label: "Price" },
     { key: "quantity", label: "Quantity" },
@@ -10,7 +10,7 @@ export const ITEMS_SCHEMA_MANAGE = {
     { key: "__actions__", label: "Actions" }
   ],
   headerButton: `
-    <button class="btn btn-primary btn-sm" data-action="open-create-company-modal">
+    <button class="btn btn-primary btn-sm" data-action="open-create-item-modal">
       Create Item entry
     </button>
   `

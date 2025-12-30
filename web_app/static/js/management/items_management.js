@@ -1,24 +1,24 @@
 import { initManagementPage } from "./management_page.js";
 import { ITEMS_SCHEMA_MANAGE } from "../schemas/schema_items.js";
-import { CREATE_USER_MODAL } from "../modals/modal_user_create.js";
-import { EDIT_USER_MODAL } from "../modals/modal_user_edit.js";
+import { CREATE_ITEM_MODAL } from "../modals/modal_items_create.js";
+import { EDIT_ITEM_MODAL } from "../modals/modal_items_edit.js";
 import { apiFetch } from "../utils.js";
 
 initManagementPage({
   modals: [
-    CREATE_USER_MODAL,
-    EDIT_USER_MODAL
+    CREATE_ITEM_MODAL,
+    EDIT_ITEM_MODAL
   ],
 
   openActions: [
     {
-      action: "open-create-user-modal",
-      modalId: "createUserModal"
+      action: "open-create-item-modal",
+      modalId: "createItemModal"
     },
     {
-      action: "edit-user",
-      modalId: "editUserModal",
-      datasetKey: "userId"
+      action: "edit-item",
+      modalId: "editItemModal",
+      datasetKey: "itemId"
     }
   ],
 
@@ -53,7 +53,7 @@ initManagementPage({
       return `
         <button 
           class="btn btn-sm btn-outline-primary"
-          data-action="edit-user"
+          data-action="edit-item"
           data-id="${row.id}">
           Edit
         </button>
