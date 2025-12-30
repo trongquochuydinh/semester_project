@@ -1,4 +1,5 @@
 import uuid
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 from api.models.user import User
 from api.models.role import Role
@@ -10,6 +11,25 @@ from api.utils import UserAlreadyLoggedInError
 def insert_user(db: Session, user: User) -> User:
     db.add(user)
     db.flush()
+
+def user_exists_by_username_or_email(
+    db: Session,
+    *,
+    username: str,
+    email: str,
+    exclude_user_id: int = None,
+) -> bool:
+    query = db.query(User).filter(
+        or_(
+            User.username == username,
+            User.email == email,
+        )
+    )
+
+    if exclude_user_id is not None:
+        query = query.filter(User.id != exclude_user_id)
+
+    return query.first() is not None
 
 def edit_user(
     db: Session,

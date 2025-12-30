@@ -15,6 +15,14 @@ export const CREATE_USER_MODAL = {
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("createUserModal");
 
+    const inputs = modal.querySelectorAll("input, select");
+    for (const el of inputs) {
+      if (!el.checkValidity()) {
+        el.reportValidity(); // shows browser message
+        return;
+      }
+    }
+    
     const payload = {
       username: modal.querySelector("#username").value,
       email: modal.querySelector("#email").value,

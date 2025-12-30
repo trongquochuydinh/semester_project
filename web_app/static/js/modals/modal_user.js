@@ -2,10 +2,30 @@ import { apiFetch } from "../utils.js";
 
 export const BASE_USER_MODAL = {
   fields: [
-    { label: "Username", html: `<input id="username" class="form-control">` },
-    { label: "Email", html: `<input type="email" id="email" class="form-control">` },
-    { label: "Role", html: `<select id="role" class="form-select"></select>` },
-    { label: "Company", html: `<select id="company" class="form-select"></select>` }
+    {
+      label: "Username",
+      html: `<input id="username" class="form-control" required>`
+    },
+    {
+      label: "Email",
+      html: `
+        <input
+          type="email"
+          id="email"
+          class="form-control"
+          placeholder="user@example.com"
+          required
+        >
+      `
+    },
+    {
+      label: "Role",
+      html: `<select id="role" class="form-select" required></select>`
+    },
+    {
+      label: "Company",
+      html: `<select id="company" class="form-select" required></select>`
+    }
   ]
 };
 
