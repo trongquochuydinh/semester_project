@@ -35,7 +35,6 @@ initManagementPage({
           }
         );
 
-        alert(data.message);
         location.reload();
       }
     }

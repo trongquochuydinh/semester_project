@@ -1,7 +1,8 @@
-import { createPaginatedTable } from "./elements/table.js";
+import { createPaginatedTable, createTableFromPaginate } from "./elements/table.js";
 import { t, apiFetch } from "./utils.js";
 import { USERS_SCHEMA_ONLINE_VIEW } from "./schemas/schema_users.js";
 import { COMPANIES_SCHEMA_VIEW } from "./schemas/schema_companies.js";
+import { ITEMS_SCHEMA_VIEW } from "./schemas/schema_items.js";
 import { createDonutStat } from "./elements/donut_stat.js";
 import { createStatCard } from "./elements/card.js"
 
@@ -21,6 +22,7 @@ document.getElementById("logout-link")?.addEventListener("click", (e) => {
 document.addEventListener("DOMContentLoaded", () => {
   const user_container = document.getElementById("users-table");
   const company_container = document.getElementById("companies-table");
+  const low_item_stock_container = document.getElementById("low-item-stock-table")
 
   const pageData = document.getElementById("page-data");
   const role = pageData?.dataset.role;
@@ -53,6 +55,20 @@ document.addEventListener("DOMContentLoaded", () => {
       tableName: "companies",
       pageSize: 5,
       filters: {},
+      actions: () => ""
+    });
+  }
+
+  if (low_item_stock_container) {
+    createTableFromPaginate({
+      container: low_item_stock_container,
+      title: t("Low stock on items (<= 20)"),
+      schema: ITEMS_SCHEMA_VIEW,
+      tableName: "items",
+      limit: 5,
+      filters: {
+        low_stock: true
+      },
       actions: () => ""
     });
   }

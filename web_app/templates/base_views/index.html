@@ -19,12 +19,16 @@
     <div id="users-table"></div>
   </div>
 
-  <!-- Companies (superadmin only) -->
-  {% if role == 'superadmin' %}
   <div class="col-md-12 col-xl-4">
-    <div id="companies-table"></div>
+    {% if role == 'superadmin' %}
+      <!-- Companies (superadmin only) -->
+      <div id="companies-table"></div>
+    {% elif role == 'admin' or role == 'manager' or role == 'employee' %}
+      <!-- Low Item Stock (company tied roles only) -->
+      <div id="low-item-stock-table"></div>
+    {% endif %}
   </div>
-  {% endif %}
+
 
 </div>
 

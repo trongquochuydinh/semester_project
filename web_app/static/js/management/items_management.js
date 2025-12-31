@@ -24,18 +24,17 @@ initManagementPage({
 
   customActions: [
     {
-      name: "toggle-user",
-      handler: async (userId) => {
+      name: "toggle-item",
+      handler: async (itemId) => {
         const data = await apiFetch(
-          `/users/toggle_user_is_active/${userId}`,
+          `/items/toggle_item_is_active/${itemId}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userId)
+            body: JSON.stringify(itemId)
           }
         );
 
-        alert(data.message);
         location.reload();
       }
     }
@@ -50,6 +49,8 @@ initManagementPage({
     filters: { },
     actions: (row) => {
 
+      const isDisabled = row.is_active === "Discontinued";
+
       return `
         <button 
           class="btn btn-sm btn-outline-primary"
@@ -59,10 +60,12 @@ initManagementPage({
         </button>
 
         <button 
-          class="btn btn-sm btn-outline-danger ms-2"
-          data-action="disable-item"
+          class="btn btn-sm ${
+            isDisabled ? "btn-outline-success" : "btn-outline-danger"
+          } ms-2"
+          data-action="toggle-item"
           data-id="${row.id}">
-          Disable
+          ${isDisabled ? "Activate" : "Discontinue"}
         </button>
       `;
     }

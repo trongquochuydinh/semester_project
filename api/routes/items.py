@@ -13,8 +13,9 @@ from api.schemas import(
 from api.services import (
     create_item,
     edit_item,
-    get_info_of_item,
-    paginate_items
+    get_item,
+    paginate_items,
+    toggle_item_is_active
 )
 
 router = APIRouter(prefix="/api/items", tags=["items"])
@@ -41,7 +42,7 @@ def create_item_endpoint(
 ):
     return create_item(request, db, current_user)
 
-@router.post("/edit/{item_id}")
+@router.post("/edit/{item_id}", response_model=ItemEditResponse)
 def edit_item_endpoint(
     item_id: int,
     request: ItemEditRequest,
@@ -51,8 +52,12 @@ def edit_item_endpoint(
     return edit_item(item_id, request, db, current_user)
 
 @router.post("/toggle_item_is_active/{item_id}")
-def toggle_item_is_active_endpoint():
-    return
+def toggle_item_is_active_endpoint(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_role(["admin", "manager"]))
+):
+    return toggle_item_is_active(item_id, db, current_user)
 
 @router.get("/get/{item_id}")
 def get_item_endpoint(
@@ -60,7 +65,9 @@ def get_item_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "manager"]))
 ):
-    return get_info_of_item(item_id, db, current_user)
+    return get_item(item_id, db, current_user)
+
+# These need orders and item-orders to function
 
 @router.get("/popular_items")
 def get_most_sold_items_endpoint():
@@ -68,10 +75,6 @@ def get_most_sold_items_endpoint():
 
 @router.get("/unpopular_items")
 def get_least_sold_items_endpoint():
-    return
-
-@router.get("/get_items_stock")
-def get_items_stock_endpoint():
     return
 
 @router.get("/num_of_items_sold_this_week")

@@ -4,7 +4,8 @@ from web_app.api_clients.items_client import (
     create_item as proxy_create_item,
     get_item as proxy_get_item,
     edit_item as proxy_edit_item,
-    paginate_item as proxy_paginate_item
+    paginate_item as proxy_paginate_item,
+    toggle_user_is_active as proxy_toggle_user_is_active
 )
 
 items_bp = Blueprint('items', __name__, url_prefix='/items')
@@ -32,6 +33,11 @@ def get_item(item_id):
 def edit_item(item_id):
     data = request.get_json()
     return proxy_edit_item(item_id, data)
+
+@items_bp.route("/toggle_item_is_active/<int:item_id>", methods=["POST"])
+@token_required
+def disable_user(item_id):
+    return proxy_toggle_user_is_active(item_id)
 
 @items_bp.route("/paginate", methods=["POST"])
 @token_required

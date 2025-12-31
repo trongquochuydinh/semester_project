@@ -18,7 +18,6 @@ export const ITEMS_SCHEMA_MANAGE = {
 
 export const ITEMS_SCHEMA_VIEW = {
   columns: [
-    { key: "id", label: "ID" },
     { key: "name", label: "Name" },
     { key: "price", label: "Price" },
     { key: "quantity", label: "Quantity" }

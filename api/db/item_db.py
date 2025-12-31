@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import asc
 from api.models.item import Item
+
+LOW_STOCK_THRESHOLD = 20
 
 def insert_item(db: Session, item: Item):
     db.add(item)
@@ -38,6 +41,9 @@ def edit_item(
     db.flush()
     return item
 
+def change_item_is_active(item: Item, is_active: bool):
+    item.is_active = is_active
+
 def paginate_items(
     db: Session,
     filters: dict,
@@ -52,10 +58,24 @@ def paginate_items(
         )
     )
 
+
+    if filters.get("low_stock"):
+        query = (
+            query
+            .filter(
+                Item.quantity <= LOW_STOCK_THRESHOLD,
+                Item.is_active == True
+            )
+            .order_by(asc(Item.quantity))
+        )
+
     # --------------------
     # Apply filters
     # --------------------
     for key, value in filters.items():
+        if key in {"low_stock"}:
+            continue
+
         if hasattr(Item, key):
             query = query.filter(getattr(Item, key) == value)
 

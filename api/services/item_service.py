@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from api.schemas import (
-    PaginationResponse, MessageResponse, ItemCreationRequest, ItemGetResponse, ItemEditRequest
+    PaginationResponse, MessageResponse, ItemCreationRequest, ItemGetResponse, ItemEditRequest, ItemEditResponse
 )
 from api.models.user import User
 from api.models.item import Item
@@ -14,7 +14,8 @@ from api.db.item_db import (
     insert_item as db_insert_item,
     get_item_data_by_id as db_get_item_data_by_id,
     edit_item as db_edit_item,
-    paginate_items as db_paginate_items
+    paginate_items as db_paginate_items,
+    change_item_is_active as db_change_user_is_active
 )
 
 from api.services import (
@@ -43,7 +44,7 @@ def create_item(data: ItemCreationRequest, db: Session, current_user: User) -> M
         message="Item was successfully added."
     )
 
-def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: User):
+def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: User) -> ItemEditResponse:
     item = db_get_item_data_by_id(db, item_id)
 
     if not item:
@@ -56,7 +57,6 @@ def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: Us
         company_id=item.company_id,
     )
 
-    # 🔒 normalize + validate
     name, price, quantity = validate_item_data(data)
 
     updates = {
@@ -77,7 +77,7 @@ def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: Us
         quantity=updated_item.quantity
     )
 
-def get_info_of_item(item_id: int, db: Session, current_user: User):
+def get_item(item_id: int, db: Session, current_user: User):
     item = db_get_item_data_by_id(db, item_id)
 
     if not item:
@@ -94,6 +94,27 @@ def get_info_of_item(item_id: int, db: Session, current_user: User):
         name=item.name,
         price=item.price,
         quantity=item.quantity
+    )
+
+def toggle_item_is_active(item_id: int, db: Session, current_user: User) -> MessageResponse:
+    item = db_get_item_data_by_id(db, item_id)
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    assert_company_access(
+        db,
+        is_superadmin=(current_user.role.name == "superadmin"),
+        current_user_company_id=current_user.company_id,
+        company_id=item.company_id,
+    )
+
+    is_active = not item.is_active
+
+    db_change_user_is_active(item, is_active)
+
+    return MessageResponse(
+        message=f"Item was successfully {'activated' if is_active else 'discontinued'}."
     )
 
 def generate_sku(name: str) -> str:

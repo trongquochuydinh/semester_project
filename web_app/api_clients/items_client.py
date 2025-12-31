@@ -21,6 +21,15 @@ def edit_item(item_id: int, data):
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
 
+def toggle_user_is_active(item_id: int):
+    """Disable item via API."""
+    try:
+        res = api_post(f"/api/items/toggle_item_is_active/{item_id}")
+        return res.json()
+
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code    
+
 def get_item(item_id):
     res = api_get(f"/api/items/get/{item_id}")
     return (res.text, res.status_code, res.headers.items())

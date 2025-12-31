@@ -1,5 +1,36 @@
 import { apiFetch } from "../utils.js";
 
+/* =========================================================
+   INTERNAL: shared fetch + render logic
+   ========================================================= */
+async function renderTableFromFetcher({
+  container,
+  title,
+  schema,
+  actions,
+  fetcher,
+  afterRender
+}) {
+  const res = await fetcher();
+
+  container.innerHTML = "";
+
+  const card = createTable({
+    title,
+    element: container,
+    schema,
+    rows: res.data,
+    actions
+  });
+
+  if (afterRender && typeof res.total === "number") {
+    afterRender(res.total, card);
+  }
+}
+
+/* =========================================================
+   PAGINATED TABLE
+   ========================================================= */
 export function createPaginatedTable({
   container,
   title,
@@ -7,39 +38,35 @@ export function createPaginatedTable({
   tableName,
   actions,
   filters = {},
-  pageSize = 10
+  pageSize = 5
 }) {
   let currentPage = 0;
 
   async function loadPage(page = 0) {
     currentPage = page;
 
-    const res = await apiFetch(`/${tableName}/paginate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        limit: pageSize,
-        offset: page * pageSize,
-        filters
-      })
-    });
-
-    container.innerHTML = "";
-
-    const card = createTable({
+    await renderTableFromFetcher({
+      container,
       title,
-      element: container,
       schema,
-      rows: res.data,
-      actions
+      actions,
+      fetcher: () =>
+        apiFetch(`/${tableName}/paginate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            limit: pageSize,
+            offset: page * pageSize,
+            filters
+          })
+        }),
+      afterRender: renderPagination
     });
-
-    renderPagination(res.total, card);
   }
 
   function renderPagination(total, card) {
     const totalPages = Math.ceil(total / pageSize);
-    if (totalPages <= 1) return; // 🔑 no pagination needed
+    if (totalPages <= 1) return;
 
     let footer = card.querySelector(".card-footer");
     if (!footer) {
@@ -57,7 +84,6 @@ export function createPaginatedTable({
       }`;
       btn.textContent = i + 1;
       btn.onclick = () => loadPage(i);
-
       footer.appendChild(btn);
     }
   }
@@ -65,6 +91,39 @@ export function createPaginatedTable({
   loadPage(0);
 }
 
+/* =========================================================
+   ONE-SHOT TABLE FROM PAGINATE (NO PAGINATION UI)
+   ========================================================= */
+export async function createTableFromPaginate({
+  container,
+  title,
+  schema,
+  tableName,
+  actions,
+  filters = {},
+  limit = 5
+}) {
+  await renderTableFromFetcher({
+    container,
+    title,
+    schema,
+    actions,
+    fetcher: () =>
+      apiFetch(`/${tableName}/paginate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          limit,
+          offset: 0,
+          filters
+        })
+      })
+  });
+}
+
+/* =========================================================
+   BASE TABLE (PURE RENDER)
+   ========================================================= */
 export function createTable({
   title,
   element,
@@ -109,6 +168,6 @@ export function createTable({
 
   element.appendChild(col);
 
-  // return card element so pagination can attach if needed
+  // return card so pagination footer can attach
   return col.querySelector(".card");
 }
