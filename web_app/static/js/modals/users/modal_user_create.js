@@ -1,4 +1,4 @@
-import { USER_FIELDS } from "./modal_user.fields.js";
+import { USER_FIELDS } from "../../schemas/schema_users.js";
 import { loadRoles, loadCompanies } from "./modal_user.loaders.js";
 import { validateModal, extractUserPayload } from "./modal_user.utils.js";
 import { apiFetch } from "../../utils.js";

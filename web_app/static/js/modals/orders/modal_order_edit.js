@@ -1,21 +1,12 @@
+import { ORDER_FIELDS } from "../../schemas/schema_orders.js";
+import { extractOrderPayload } from "./modal_order.utils.js";
 import { loadOrderData } from "./modal_order.loaders.js";
 import { apiFetch } from "../../utils.js";
 
 export const EDIT_ORDER_MODAL = {
   id: "editOrderModal",
   title: "Edit Order",
-
-  fields: [
-    {
-      label: "Order Type",
-      html: `
-        <select id="order_type" class="form-select" required>
-          <option value="purchase">Purchase</option>
-          <option value="sale">Sale</option>
-        </select>
-      `
-    }
-  ],
+  fields: ORDER_FIELDS,
 
   onLoad: async () => {
     const modal = document.getElementById("editOrderModal");
@@ -33,9 +24,7 @@ export const EDIT_ORDER_MODAL = {
       const data = await apiFetch(`/orders/edit/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          order_type: modal.querySelector("#order_type").value
-        })
+        body: JSON.stringify(extractOrderPayload(modal))
       });
 
       if (!data.success) {

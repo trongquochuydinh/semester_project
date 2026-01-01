@@ -1,30 +1,71 @@
+import { ORDER_FIELDS } from "../../schemas/schema_orders.js";
+import { extractOrderPayload, renderOrderItemActions } from "./modal_order.utils.js";
+import { ORDER_SCHEMA_SELECT } from "../../schemas/schema_orders.js";
+import { createTableFromPaginate } from "../../elements/table.js"; // adjust path if needed
 import { apiFetch } from "../../utils.js";
 
 export const CREATE_ORDER_MODAL = {
   id: "createOrderModal",
   title: "Create Order",
+  fields: ORDER_FIELDS,
 
-  fields: [
-    {
-      label: "Order Type",
-      html: `
-        <select id="order_type" class="form-select" required>
-          <option value="purchase">Purchase</option>
-          <option value="sale">Sale</option>
-        </select>
-      `
-    }
-  ],
+  onLoad: async () => {
+    const modal = document.getElementById("createOrderModal");
+
+    // render items table inside modal
+    await createTableFromPaginate({
+      container: modal.querySelector(".order-items-container"),
+      title: "Select Items",
+      schema: ORDER_SCHEMA_SELECT,
+      tableName: "items",
+      limit: 10,
+      actions: renderOrderItemActions
+    });
+
+    // checkbox ↔ quantity wiring
+    modal.querySelectorAll(".order-item-check").forEach(check => {
+      check.addEventListener("change", () => {
+        const id = check.dataset.itemId;
+        const qty = modal.querySelector(
+          `.order-item-qty[data-item-id="${id}"]`
+        );
+
+        qty.disabled = !check.checked;
+        if (!check.checked) qty.value = 1;
+      });
+    });
+  },
 
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("createOrderModal");
+
+    // collect selected items
+    const items = Array.from(
+      modal.querySelectorAll(".order-item-check:checked")
+    ).map(check => {
+      const id = check.dataset.itemId;
+      const qty = modal.querySelector(
+        `.order-item-qty[data-item-id="${id}"]`
+      ).value;
+
+      return {
+        item_id: Number(id),
+        quantity: Number(qty)
+      };
+    });
+
+    if (items.length === 0) {
+      writeResult(`<div class="text-danger">Select at least one item.</div>`);
+      return;
+    }
 
     try {
       const data = await apiFetch("/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          order_type: modal.querySelector("#order_type").value
+          ...extractOrderPayload(modal),
+          items
         })
       });
 

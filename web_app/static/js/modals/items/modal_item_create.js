@@ -1,4 +1,4 @@
-import { ITEM_FIELDS } from "./modal_item.fields.js";
+import { ITEM_FIELDS } from "../../schemas/schema_items.js";
 import {
   validateInputs,
   extractPayload,

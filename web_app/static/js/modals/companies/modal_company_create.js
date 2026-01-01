@@ -1,4 +1,4 @@
-import { COMPANY_FIELDS } from "./modal_company.fields.js";
+import { COMPANY_FIELDS } from "../../schemas/schema_companies.js";
 import { validateCompanyModal, extractCompanyPayload } from "./modal_company.utils.js";
 import { apiFetch } from "../../utils.js";
 
