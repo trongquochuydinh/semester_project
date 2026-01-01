@@ -1,9 +1,9 @@
-import { createPaginatedTable } from "../elements/table.js";
-import { registerAction } from "../elements/action.js";
-import { createFormModal } from "../elements/modal.js";
-import { CREATE_COMPANY_MODAL } from "../modals/modal_company_create.js";
-import { EDIT_COMPANY_MODAL } from "../modals/modal_company_edit.js";
-import { COMPANIES_SCHEMA_MANAGE } from "../schemas/schema_companies.js";
+import { createPaginatedTable } from "../../elements/table.js";
+import { registerAction } from "../../elements/action.js";
+import { createFormModal } from "../../elements/modal.js";
+import { CREATE_COMPANY_MODAL } from "../../modals/companies/modal_company_create.js";
+import { EDIT_COMPANY_MODAL } from "../../modals/companies/modal_company_edit.js";
+import { COMPANIES_SCHEMA_MANAGE } from "../../schemas/schema_companies.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   createFormModal(CREATE_COMPANY_MODAL);

@@ -3,7 +3,7 @@ export const ITEMS_SCHEMA_MANAGE = {
     { key: "id", label: "ID" },
     { key: "name", label: "Name" },
     { key: "sku", label: "SKU" },
-    { key: "price", label: "Price" },
+    { key: "price", label: "Price (Czk)" },
     { key: "quantity", label: "Quantity" },
     { key: "is_active", label: "Status" },
     { key: "company_name", label: "Company" },
@@ -19,7 +19,7 @@ export const ITEMS_SCHEMA_MANAGE = {
 export const ITEMS_SCHEMA_VIEW = {
   columns: [
     { key: "name", label: "Name" },
-    { key: "price", label: "Price" },
+    { key: "price", label: "Price (Czk)" },
     { key: "quantity", label: "Quantity" }
   ],
   headerButton: ""

@@ -1,4 +1,4 @@
-import { apiFetch } from "../utils.js";
+import { apiFetch } from "../../utils.js";
 
 export const BASE_USER_MODAL = {
   fields: [

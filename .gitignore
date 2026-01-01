@@ -1,6 +1,8 @@
 venv
 .vscode
 config.
-__pycache__
+__py
+web_app/__pycache__
 *.pyc
 .env
+.DS_Store
