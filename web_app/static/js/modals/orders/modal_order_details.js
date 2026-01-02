@@ -1,4 +1,6 @@
 import { loadOrderData } from "./modal_order.loaders.js";
+import { createPaginatedTable } from "../../elements/table.js";
+import { ITEMS_SCHEMA_VIEW } from "../../schemas/schema_items.js"
 
 export const ORDER_DETAILS_MODAL = {
   id: "orderDetailsModal",
@@ -9,13 +11,20 @@ export const ORDER_DETAILS_MODAL = {
     const modal = document.getElementById("orderDetailsModal");
     const orderId = modal.dataset.orderId;
 
-    const order = await loadOrderData(modal, orderId);
+    let container = modal.querySelector(".order-details-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.className = "order-details-container";
+      modal.querySelector(".modal-body").appendChild(container);
+    }
 
-    modal.querySelector(".modal-body").innerHTML = `
-      <p><b>ID:</b> ${order.id}</p>
-      <p><b>Status:</b> ${order.status}</p>
-      <p><b>Total price:</b> ${order.total_price} CZK</p>
-      <p><b>Created at:</b> ${order.created_at}</p>
-    `;
+    await createPaginatedTable({
+      container,
+      title: "Ordered Items",
+      schema: ITEMS_SCHEMA_VIEW,
+      tableName: `orders/${orderId}/items`,
+      pageSize: 5,
+      actions: () => ""
+    });
   }
 };
