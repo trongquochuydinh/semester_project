@@ -1,7 +1,7 @@
 import { ORDER_FIELDS } from "../../schemas/schema_orders.js";
 import { extractOrderPayload, renderOrderItemActions } from "./modal_order.utils.js";
 import { ORDER_SCHEMA_SELECT } from "../../schemas/schema_orders.js";
-import { createTableFromPaginate } from "../../elements/table.js"; // adjust path if needed
+import { createTableFromPaginate, createPaginatedTable } from "../../elements/table.js"; // adjust path if needed
 import { apiFetch } from "../../utils.js";
 
 export const CREATE_ORDER_MODAL = {
@@ -12,14 +12,13 @@ export const CREATE_ORDER_MODAL = {
   onLoad: async () => {
     const modal = document.getElementById("createOrderModal");
 
-    // render items table inside modal
-    await createTableFromPaginate({
-      container: modal.querySelector(".order-items-container"),
-      title: "Select Items",
-      schema: ORDER_SCHEMA_SELECT,
-      tableName: "items",
-      limit: 10,
-      actions: renderOrderItemActions
+    await createPaginatedTable({
+          container: modal.querySelector(".order-items-container"),
+          title: "Select Items",
+          schema: ORDER_SCHEMA_SELECT,
+          tableName: "items",
+          pageSize: 5,
+          actions: renderOrderItemActions
     });
 
     // checkbox ↔ quantity wiring

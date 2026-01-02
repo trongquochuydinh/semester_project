@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import asc
 from api.models.order import Order
 
 def paginate_order(
@@ -16,23 +15,25 @@ def paginate_order(
         )
     )
 
-    # --------------------
-    # Apply filters
-    # --------------------
     for key, value in filters.items():
         if hasattr(Order, key):
             query = query.filter(getattr(Order, key) == value)
 
-    # --------------------
-    # Company restriction
-    # --------------------
     if company_id is not None:
         query = query.filter(Order.company_id == company_id)
 
-    # --------------------
-    # Pagination
-    # --------------------
     total = query.count()
     results = query.offset(offset).limit(limit).all()
+
+    # ONLY change: add formatted fields, do NOT overwrite columns
+    for order in results:
+        order.created_at_fmt = (
+            order.created_at.strftime("%d.%m.%Y %H:%M")
+            if order.created_at else None
+        )
+        order.completed_at_fmt = (
+            order.completed_at.strftime("%d.%m.%Y %H:%M")
+            if order.completed_at else None
+        )
 
     return total, results

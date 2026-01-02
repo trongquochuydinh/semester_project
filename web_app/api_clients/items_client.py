@@ -6,8 +6,18 @@ def paginate_item(data):
     return (res.text, res.status_code, res.headers.items())
 
 def create_item(data):
-    res = api_post("/api/items/create", data)
-    return (res.text, res.status_code, res.headers.items())
+    """Create a new item via API."""
+    try:
+        res = api_post("/api/items/create", data)
+        resp_json = res.json()
+
+        return jsonify({
+            "success": True,
+            "message": resp_json.get("message")
+        })
+
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code
 
 def edit_item(item_id: int, data):
     try:

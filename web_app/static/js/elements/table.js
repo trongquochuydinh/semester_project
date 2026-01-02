@@ -79,6 +79,7 @@ export function createPaginatedTable({
 
     for (let i = 0; i < totalPages; i++) {
       const btn = document.createElement("button");
+      btn.type = "button";
       btn.className = `btn btn-sm ${
         i === currentPage ? "btn-primary" : "btn-outline-primary"
       }`;

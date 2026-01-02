@@ -11,13 +11,6 @@ export function renderOrderActions(row) {
   if (row.status === "pending") {
     buttons += `
       <button 
-        class="btn btn-sm btn-outline-primary ms-2"
-        data-action="edit-order"
-        data-id="${row.id}">
-        Edit
-      </button>
-
-      <button 
         class="btn btn-sm btn-outline-danger ms-2"
         data-action="toggle-order"
         data-id="${row.id}">
