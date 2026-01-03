@@ -18,7 +18,7 @@ def login_user(identifier: str, password: str, db: Session) -> LoginResponse:
         )
     except InvalidCredentialsError:
         raise HTTPException(
-            status_code=401,
+            status_code=406,
             detail="Invalid username or password"
         )
 

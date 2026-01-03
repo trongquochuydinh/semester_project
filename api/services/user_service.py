@@ -135,7 +135,7 @@ def edit_user(
 
     updated_user = db_edit_user(
         db=db,
-        user_id=user.id,
+        user=user,
         updates=updates,
         role_id=role.id,
     )
@@ -224,6 +224,8 @@ def paginate_users(
         d["role_name"] = u.role.name if u.role else None
         d["company_name"] = u.company.name if u.company else None
         return d
+
+    # TODO: maybe give all the users of the company, but only those with lower hierarchy will be editable?
 
     return PaginationResponse(
         total=total,

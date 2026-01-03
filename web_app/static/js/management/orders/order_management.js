@@ -3,13 +3,12 @@ import { ORDER_SCHEMA_MANAGE } from "../../schemas/schema_orders.js";
 import { CREATE_ORDER_MODAL } from "../../modals/orders/modal_order_create.js";
 import { EDIT_ORDER_MODAL } from "../../modals/orders/modal_order_edit.js";
 import { ORDER_DETAILS_MODAL } from "../../modals/orders/modal_order_details.js";
-import { toggleOrder } from "./order_handlers.js";
+import { cancelOrder } from "./order_handlers.js";
 import { renderOrderActions } from "./order_actions.js";
 
 initManagementPage({
   modals: [
     CREATE_ORDER_MODAL,
-    EDIT_ORDER_MODAL,
     ORDER_DETAILS_MODAL
   ],
 
@@ -32,8 +31,8 @@ initManagementPage({
 
   customActions: [
     {
-      name: "toggle-order",
-      handler: toggleOrder
+      name: "cancel-order",
+      handler: cancelOrder
     }
   ],
 

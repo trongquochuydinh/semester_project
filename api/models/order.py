@@ -39,11 +39,10 @@ class Order(Base):
         ),
     )
 
-    # Relationships (optional but recommended)
     user = relationship("User")
     company = relationship("Company")
     items = relationship(
         "OrderItem",
         back_populates="order",
-        cascade="all, delete-orphan"
+        passive_deletes=True
     )

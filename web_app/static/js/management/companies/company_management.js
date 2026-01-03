@@ -1,50 +1,42 @@
-import { createPaginatedTable } from "../../elements/table.js";
-import { registerAction } from "../../elements/action.js";
-import { createFormModal } from "../../elements/modal.js";
+import { initManagementPage } from "../management_page.js";
+import { COMPANIES_SCHEMA_MANAGE } from "../../schemas/schema_companies.js";
 import { CREATE_COMPANY_MODAL } from "../../modals/companies/modal_company_create.js";
 import { EDIT_COMPANY_MODAL } from "../../modals/companies/modal_company_edit.js";
-import { COMPANIES_SCHEMA_MANAGE } from "../../schemas/schema_companies.js";
+import { deleteCompany } from "./company_handers.js";
+import { renderCompanyActions } from "./company_actions.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  createFormModal(CREATE_COMPANY_MODAL);
-  createFormModal(EDIT_COMPANY_MODAL);
+initManagementPage({
+  modals: [
+    CREATE_COMPANY_MODAL,
+    EDIT_COMPANY_MODAL
+  ],
 
-  registerAction("open-create-company-modal", () => {
-    const modalEl = document.getElementById("createCompanyModal");
-    new bootstrap.Modal(modalEl).show();
-  });
+  openActions: [
+    {
+      action: "open-create-company-modal",
+      modalId: "createCompanyModal"
+    },
+    {
+      action: "edit-company",
+      modalId: "editCompanyModal",
+      datasetKey: "companyId"
+    }
+  ],
 
-  registerAction("edit-company", (companyId) => {
-    const modalEl = document.getElementById("editCompanyModal");
-    modalEl.dataset.companyId = companyId;
-    new bootstrap.Modal(modalEl).show();
-  });
+  customActions: [
+    {
+      name: "delete-company",
+      handler: deleteCompany
+    }
+  ],
 
-  const container = document.getElementById("companies-table");
-
-  if (container) {
-    createPaginatedTable({
-      container,
-      title: "Companies",
-      schema: COMPANIES_SCHEMA_MANAGE,
-      tableName: "companies",
-      pageSize: 10,
-      filters: {},
-      actions: (row) => `
-        <button 
-          class="btn btn-sm btn-outline-primary"
-          data-action="edit-company"
-          data-id="${row.id}">
-          Edit
-        </button>
-
-        <button 
-          class="btn btn-sm btn-outline-danger ms-2"
-          data-action="delete-company"
-          data-id="${row.id}">
-          Delete
-        </button>
-      `
-    });
+  table: {
+    containerId: "companies-table",
+    title: "Companies",
+    schema: COMPANIES_SCHEMA_MANAGE,
+    tableName: "companies",
+    pageSize: 10,
+    filters: {},
+    actions: renderCompanyActions
   }
 });

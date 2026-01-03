@@ -31,7 +31,7 @@ export const EDIT_USER_MODAL = {
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("editUserModal");
     const userId = modal.dataset.userId;
-    if (!validateModal(modal)) return;
+    if (!validateModal(modal)) return false;
 
     try {
       const data = await apiFetch(`/users/edit/${userId}`, {
@@ -42,12 +42,14 @@ export const EDIT_USER_MODAL = {
 
       if (!data.success) {
         writeResult(`<div class="text-danger">${data.message}</div>`);
-        return;
+        return false;
       }
 
       writeResult(`<div class="alert alert-success"><b>User updated successfully!</b></div>`);
+      return true;
     } catch (err) {
       writeResult(`<div class="text-danger">${err.message}</div>`);
+      return false;
     }
   }
 };

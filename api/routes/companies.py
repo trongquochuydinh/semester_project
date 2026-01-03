@@ -12,30 +12,56 @@ from api.schemas import(
     PaginationRequest
 )
 
-from api.services import create_company, get_info_of_company, paginate_companies
+from api.services import (
+    create_company, 
+    get_info_of_company, 
+    edit_company,
+    delete_company,
+    paginate_companies,
+    list_companies
+)
 
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
-class CompanyResponse(BaseModel):
-    id: int
-    name: str
-
-@router.get("/get_companies", response_model=List[CompanyResponse])
-def get_companies():
-    session = SessionLocal()
-    try:
-        companies = session.query(Company).all()
-        return [CompanyResponse(id=company.id, name=company.name) for company in companies]
-    finally:
-        session.close()
+@router.get("/get_companies")
+def get_companies_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["superadmin", "admin", "manager"]))
+):
+    return list_companies(db, current_user)
 
 @router.post("/create")
-def create_company_endpoint(data: CompanyCreate, db: Session = Depends(get_db)):
+def create_company_endpoint(
+    data: CompanyCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["superadmin"]))
+):
     return create_company(data, db)
 
 @router.get("/get/{company_id}")
-def get_company(company_id, db: Session = Depends(get_db)):
+def get_company_endpoint(
+    company_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["superadmin"]))
+):
     return get_info_of_company(company_id, db)
+
+@router.post("/edit/{company_id}")
+def edit_company_endpoint(
+    company_id: int, 
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["superadmin"]))
+):
+    return edit_company(company_id, db, data)
+
+@router.post("/delete/{company_id}")
+def delete_company_endpoint(
+    company_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["superadmin"]))
+):
+    return delete_company(company_id, db)
 
 @router.post("/paginate")
 def paginate_companies_endpoint(

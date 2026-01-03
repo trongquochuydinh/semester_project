@@ -34,6 +34,8 @@ export function createFormModal({
   onLoad,
   onSubmit
 }) {
+  let submitSucceeded = false;
+
   const bodyHtml = `
     <form id="${id}-form">
       ${fields.map(f => `
@@ -57,12 +59,18 @@ export function createFormModal({
   const modalEl = document.getElementById(id);
 
   modalEl.addEventListener("shown.bs.modal", () => {
+    submitSucceeded = false;
     if (typeof onLoad === "function") {
       onLoad();
     }
   });
 
-  // Helper for writing to result box
+  modalEl.addEventListener("hidden.bs.modal", () => {
+    if (submitSucceeded) {
+      location.reload();
+    }
+  });
+
   function writeResult(html) {
     const box = document.getElementById(`${id}-result`);
     if (box) {
@@ -71,9 +79,13 @@ export function createFormModal({
     }
   }
 
-  document.addEventListener("click", (e) => {
+  document.addEventListener("click", async (e) => {
     if (e.target.id === `${id}-submit-btn`) {
-      onSubmit(writeResult);   // pass callback
+      const result = onSubmit(writeResult);
+
+      submitSucceeded = result instanceof Promise
+        ? await result === true
+        : result === true;
     }
   });
 }

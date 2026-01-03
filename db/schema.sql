@@ -134,7 +134,7 @@ CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
 
     order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    item_id INT NOT NULL REFERENCES items(id),
+    item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
 
     quantity INT NOT NULL CHECK (quantity > 0),
     unit_price NUMERIC(10,2) NOT NULL CHECK (unit_price >= 0)

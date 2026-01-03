@@ -11,7 +11,7 @@ export function validateCompanyModal(modal) {
 
 export function extractCompanyPayload(modal) {
   return {
-    company_name: modal.querySelector("#company_name").value,
+    name: modal.querySelector("#company_name").value,
     field: modal.querySelector("#field").value
   };
 }

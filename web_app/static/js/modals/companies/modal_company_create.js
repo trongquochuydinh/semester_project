@@ -9,7 +9,7 @@ export const CREATE_COMPANY_MODAL = {
 
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("createCompanyModal");
-    if (!validateCompanyModal(modal)) return;
+    if (!validateCompanyModal(modal)) return false;
 
     try {
       const data = await apiFetch("/companies/create", {
@@ -20,7 +20,7 @@ export const CREATE_COMPANY_MODAL = {
 
       if (!data.success) {
         writeResult(`<div class="text-danger">${data.message}</div>`);
-        return;
+        return false;
       }
 
       writeResult(`
@@ -28,8 +28,10 @@ export const CREATE_COMPANY_MODAL = {
           <b>Company created successfully!</b>
         </div>
       `);
+      return true;
     } catch (err) {
       writeResult(`<div class="text-danger">${err.message}</div>`);
+      return false;
     }
   }
 };

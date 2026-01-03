@@ -30,3 +30,13 @@ def paginate_order_items(
     results = query.offset(offset).limit(limit).all()
 
     return total, results
+
+def insert_order_item(db: Session, order_item: OrderItem):
+    db.add(order_item)
+
+def get_order_items(db: Session, order_id: int):
+    return (
+        db.query(OrderItem)
+        .filter(OrderItem.order_id == order_id)
+        .all()
+    )

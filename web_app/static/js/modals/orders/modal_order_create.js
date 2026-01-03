@@ -1,7 +1,7 @@
 import { ORDER_FIELDS } from "../../schemas/schema_orders.js";
 import { extractOrderPayload, renderOrderItemActions } from "./modal_order.utils.js";
 import { ORDER_SCHEMA_SELECT } from "../../schemas/schema_orders.js";
-import { createTableFromPaginate, createPaginatedTable } from "../../elements/table.js"; // adjust path if needed
+import { createPaginatedTable } from "../../elements/table.js";
 import { apiFetch } from "../../utils.js";
 
 export const CREATE_ORDER_MODAL = {
@@ -11,27 +11,30 @@ export const CREATE_ORDER_MODAL = {
 
   onLoad: async () => {
     const modal = document.getElementById("createOrderModal");
+    const container = modal.querySelector(".order-items-container");
 
     await createPaginatedTable({
-          container: modal.querySelector(".order-items-container"),
-          title: "Select Items",
-          schema: ORDER_SCHEMA_SELECT,
-          tableName: "items",
-          pageSize: 5,
-          actions: renderOrderItemActions
+      container,
+      title: "Select Items",
+      schema: ORDER_SCHEMA_SELECT,
+      tableName: "items",
+      pageSize: 5,
+      actions: renderOrderItemActions
     });
 
-    // checkbox ↔ quantity wiring
-    modal.querySelectorAll(".order-item-check").forEach(check => {
-      check.addEventListener("change", () => {
-        const id = check.dataset.itemId;
-        const qty = modal.querySelector(
-          `.order-item-qty[data-item-id="${id}"]`
-        );
+    // ✅ Event delegation for checkbox ↔ quantity wiring
+    container.addEventListener("change", (e) => {
+      if (!e.target.classList.contains("order-item-check")) return;
 
-        qty.disabled = !check.checked;
-        if (!check.checked) qty.value = 1;
-      });
+      const id = e.target.dataset.itemId;
+      const qty = container.querySelector(
+        `.order-item-qty[data-item-id="${id}"]`
+      );
+
+      if (!qty) return;
+
+      qty.disabled = !e.target.checked;
+      if (!e.target.checked) qty.value = 1;
     });
   },
 
@@ -55,7 +58,7 @@ export const CREATE_ORDER_MODAL = {
 
     if (items.length === 0) {
       writeResult(`<div class="text-danger">Select at least one item.</div>`);
-      return;
+      return false;
     }
 
     try {
@@ -70,7 +73,7 @@ export const CREATE_ORDER_MODAL = {
 
       if (!data.success) {
         writeResult(`<div class="text-danger">${data.message}</div>`);
-        return;
+        return false;
       }
 
       writeResult(`
@@ -78,8 +81,11 @@ export const CREATE_ORDER_MODAL = {
           <b>Order created successfully!</b>
         </div>
       `);
+      return true;
+
     } catch (err) {
       writeResult(`<div class="text-danger">${err.message}</div>`);
+      return false;
     }
   }
 };

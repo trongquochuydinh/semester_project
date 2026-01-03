@@ -15,7 +15,7 @@ export const CREATE_ITEM_MODAL = {
   onSubmit: async (writeResult) => {
     const modal = document.getElementById("createItemModal");
 
-    if (!validateInputs(modal)) return;
+    if (!validateInputs(modal)) return false;
 
     const payload = extractPayload(modal, ["name", "price", "quantity"]);
 
@@ -28,13 +28,15 @@ export const CREATE_ITEM_MODAL = {
 
       if (!data.success) {
         renderError(writeResult, data.message || "Failed to create item");
-        return;
+        return false;
       }
 
-      renderSuccess(writeResult, "Item created successfully!");
+      renderSuccess(writeResult, "Item created successfully!")
+      return true;
     } catch (err) {
       console.error(err);
-      renderError(writeResult, err.message || "Unexpected error occurred");
+      renderError(writeResult, err.message || "Unexpected error occurred")
+      return false;
     }
   }
 };

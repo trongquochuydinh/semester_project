@@ -12,7 +12,7 @@ export function renderOrderActions(row) {
     buttons += `
       <button 
         class="btn btn-sm btn-outline-danger ms-2"
-        data-action="toggle-order"
+        data-action="cancel-order"
         data-id="${row.id}">
         Cancel
       </button>

@@ -21,18 +21,18 @@ export const EDIT_COMPANY_MODAL = {
     const modal = document.getElementById("editCompanyModal");
     const companyId = modal.dataset.companyId;
 
-    if (!validateCompanyModal(modal)) return;
+    if (!validateCompanyModal(modal)) return false;
 
     try {
       const data = await apiFetch(`/companies/edit/${companyId}`, {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(extractCompanyPayload(modal))
       });
 
       if (!data.success) {
         writeResult(`<div class="text-danger">${data.message}</div>`);
-        return;
+        return false;
       }
 
       writeResult(`
@@ -40,8 +40,10 @@ export const EDIT_COMPANY_MODAL = {
           <b>Company updated successfully!</b>
         </div>
       `);
+      return true;
     } catch (err) {
       writeResult(`<div class="text-danger">${err.message}</div>`);
+      return false;
     }
   }
 };

@@ -13,15 +13,6 @@ export function initManagementPage(config) {
   document.addEventListener("DOMContentLoaded", () => {
 
     modals.forEach(createFormModal);
-
-    modals.forEach(modalConfig => {
-      const modalEl = document.getElementById(modalConfig.id);
-      if (!modalEl) return;
-
-      modalEl.addEventListener("hidden.bs.modal", () => {
-        location.reload();
-      });
-    });
     // ---------------------------
     // Register open-modal actions
     // ---------------------------

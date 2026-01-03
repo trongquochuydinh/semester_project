@@ -1,9 +1,12 @@
 from decimal import Decimal
 from email.utils import parseaddr
 from fastapi import HTTPException
+from typing import List
 
 from api.schemas.item_schema import ItemWriter
 from api.schemas.user_schema import UserWriter
+
+from api.models import Item
 
 
 def normalize_string(value: str, field_name: str) -> str:
@@ -71,3 +74,39 @@ def validate_item_numbers(price_raw, quantity_raw):
         raise HTTPException(400, "Quantity must be >= 0")
 
     return price, quantity
+
+def validate_order_type(order_type_raw: str):
+    order_type = normalize_string(order_type_raw, "order_type")
+    if order_type not in ["sale", "restock"]:
+        raise HTTPException(400, "Order type must be sale or restock")
+    return order_type.lower()
+
+def validate_order_item(
+    *,
+    item: Item,
+    quantity: int,
+    order_type: str,
+):
+    if not item.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Item '{item.name}' is disabled"
+        )
+
+    if quantity <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Quantity must be greater than zero"
+        )
+
+    if order_type == "sale" and quantity > item.quantity:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Insufficient stock for '{item.name}'"
+        )
+
+    return {
+        "item": item,
+        "quantity": quantity,
+        "unit_price": item.price,
+    }

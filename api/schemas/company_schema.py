@@ -1,5 +1,13 @@
 from pydantic import BaseModel
+from typing import List
+
+class CompanyOut(BaseModel):
+    id: int
+    name: str
+
+class CompaniesResponse(BaseModel):
+    companies: List[CompanyOut]
 
 class CompanyCreate(BaseModel):
-    company_name: str
+    name: str
     field: str

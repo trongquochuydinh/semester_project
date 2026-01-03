@@ -14,10 +14,14 @@ class User(Base):
     is_active = Column(Boolean, nullable=False, default=True)
     last_login = Column(DateTime, nullable=True)
 
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
+    company_id = Column(
+        Integer,
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        nullable=True
+    )
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
 
     role = relationship("Role", back_populates="users")
-    company = relationship("Company", backref="users")
+    company = relationship("Company", passive_deletes=True)
 
     session_id = Column(String, nullable=True)

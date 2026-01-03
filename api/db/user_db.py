@@ -33,7 +33,7 @@ def user_exists_by_username_or_email(
 
 def edit_user(
     db: Session,
-    user_id: int,
+    user: User,
     updates: dict,
     role_id: int,
 ) -> User:
@@ -43,10 +43,6 @@ def edit_user(
         "email",
         "company_id"
     }
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        return None
 
     for key, value in updates.items():
         if key in EDITABLE_FIELDS:

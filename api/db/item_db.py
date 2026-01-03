@@ -8,6 +8,9 @@ def insert_item(db: Session, item: Item):
     db.add(item)
     db.flush()
 
+def apply_stock_change(item: Item, delta: int):
+    item.quantity += delta
+
 def get_item_data_by_id(db: Session, item_id: int):
     return (
         db.query(Item)

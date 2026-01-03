@@ -21,8 +21,9 @@ export async function loadCompanies(container) {
 
   select.innerHTML = "";
 
-  const companies = await apiFetch("/companies/get_companies");
-  companies.forEach(c => {
+  const res = await apiFetch("/companies/get_companies");
+
+  res.companies.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c.id;
     opt.textContent = c.name;

@@ -33,4 +33,13 @@ class Item(Base):
     )
 
     # relationships
-    company = relationship("Company")
+    company = relationship(
+        "Company",
+        back_populates="items"
+    )
+    
+    order_items = relationship(
+        "OrderItem",
+        back_populates="item",
+        passive_deletes=True
+    )

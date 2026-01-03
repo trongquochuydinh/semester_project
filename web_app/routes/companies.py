@@ -4,6 +4,8 @@ from web_app.api_clients.companies_client import (
     get_companies as proxy_get_companies, 
     create_company as proxy_create_company, 
     get_company as proxy_get_company,
+    edit_company as proxy_edit_company,
+    delete_company as proxy_delete_company,
     paginate_company as proxy_paginate_company
 )
 
@@ -31,6 +33,17 @@ def get_companies():
 @token_required
 def get_company(company_id):
     return proxy_get_company(company_id)
+
+@companies_bp.route("/edit/<int:company_id>", methods=["POST"])
+@token_required
+def edit_company(company_id):
+    data = request.get_json()
+    return proxy_edit_company(company_id, data)
+
+@companies_bp.route("/delete/<int:company_id>", methods=["POST"])
+@token_required
+def delete_company(company_id):
+    return proxy_delete_company(company_id)
 
 @companies_bp.route("/paginate", methods=["POST"])
 @token_required

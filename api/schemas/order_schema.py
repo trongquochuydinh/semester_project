@@ -4,4 +4,4 @@ from typing import List
 
 class OrderCreateRequest(BaseModel):
     order_type: str
-    list_of_items: List[dict]
+    items: List[dict]

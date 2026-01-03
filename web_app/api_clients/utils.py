@@ -34,7 +34,7 @@ def api_request(method, endpoint, data=None, params=None):
             session.pop("token", None)
             session.pop("user", None)
 
-            raise APIUnauthorizedError("Session expired", 401)
+            raise APIUnauthorizedError(res.text, 401)
 
         # Other errors
         if res.status_code >= 400:

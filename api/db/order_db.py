@@ -37,3 +37,20 @@ def paginate_order(
         )
 
     return total, results
+
+def insert_order(db: Session, order: Order):
+    db.add(order)
+    db.flush()
+
+def get_order_by_id(db: Session, order_id: int) -> Order:
+    return (
+        db.query(Order)
+        .options(
+            joinedload(Order.company),
+        )
+        .filter(Order.id == order_id)
+        .first()
+    )
+
+def change_order_status(order: Order, status: str):
+    order.status = status
