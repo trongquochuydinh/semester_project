@@ -112,18 +112,28 @@ async function loadUserStats() {
   }
 
   // --- Orders made (static / later API) ---
+
+  const res = await fetch("/orders/order_counts");
+  const data = await res.json();
+
   createStatCard({
     container,
-    title: t("Orders made"),
-    value: 128,
+    title: t("Pending sale orders"),
+    value: data.pending,
     description: t("this week")
   });
 
-  // --- Items sold (static / later API) ---
   createStatCard({
     container,
-    title: t("Items sold"),
-    value: 128,
+    title: t("Completed sale orders"),
+    value: data.completed,
+    description: t("this week")
+  });
+
+  createStatCard({
+    container,
+    title: t("Cancelled sale orders"),
+    value: data.cancelled,
     description: t("this week")
   });
 }

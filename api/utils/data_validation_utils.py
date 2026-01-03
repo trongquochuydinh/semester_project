@@ -1,13 +1,12 @@
+import datetime
 from decimal import Decimal
 from email.utils import parseaddr
 from fastapi import HTTPException
-from typing import List
 
 from api.schemas.item_schema import ItemWriter
 from api.schemas.user_schema import UserWriter
 
 from api.models import Item
-
 
 def normalize_string(value: str, field_name: str) -> str:
     if value is None:
@@ -21,6 +20,12 @@ def normalize_string(value: str, field_name: str) -> str:
         raise HTTPException(400, f"{field_name} cannot be empty")
 
     return value
+
+def start_of_day(dt: datetime) -> datetime:
+    return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+def end_of_day(dt: datetime) -> datetime:
+    return dt.replace(hour=23, minute=59, second=59, microsecond=999999)
 
 def validate_user_data(data: UserWriter):
     username = normalize_string(data.username, "Username")

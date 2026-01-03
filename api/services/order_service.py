@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -12,7 +13,8 @@ from api.db.order_db import (
     paginate_order as db_paginate_orders,
     insert_order as db_insert_order,
     get_order_by_id as db_get_order_by_id,
-    change_order_status as db_change_order_status
+    change_order_status as db_change_order_status,
+    count_orders_grouped_by_status as db_count_orders_grouped_by_status
 )
 
 from api.db.order_items_db import (
@@ -27,7 +29,7 @@ from api.db.item_db import (
 )
 
 from api.services.company_service import assert_company_access
-from api.utils import validate_order_type, validate_order_item
+from api.utils import validate_order_type, validate_order_item, start_of_day, end_of_day
 
 def paginate_orders(
     db: Session,
@@ -130,8 +132,6 @@ def create_order(db: Session, data, current_user: User):
 
         if order_type == "sale":
             db_apply_stock_change(v["item"], -v["quantity"])
-        # elif order_type == "restock":
-        #     db_apply_stock_change(v["item"], v["quantity"])
 
     return MessageResponse(
         message="Order was successfully created."
@@ -178,5 +178,66 @@ def cancel_order(db: Session, order_id: int, current_user: User):
         message=f"Order was successfully cancelled."
     )
 
-def complete_order(order_id: int):
-    return
+def complete_order(db: Session, order_id: int, current_user: User):
+    order: Order = db_get_order_by_id(db, order_id)
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    assert_company_access(
+        db=db,
+        is_superadmin=False,
+        current_user_company_id=current_user.company_id,
+        company_id=order.company_id
+    )
+
+    if order.status == "cancelled":
+        raise HTTPException(
+            status_code=400,
+            detail="Order is already cancelled"
+        )
+
+    if order.status == "completed":
+        raise HTTPException(
+            status_code=400,
+            detail="Completed orders cannot be cancelled"
+        )
+
+    order_items = db_get_order_items(db, order.id)
+
+    for oi in order_items:
+        item = oi.item
+
+        if order.order_type == "restock":
+            db_apply_stock_change(item, oi.quantity)
+
+    db_change_order_status(order, "completed")
+
+    return MessageResponse(
+        message=f"Order was successfully completed."
+    )
+
+def count_orders_by_status(
+    db: Session,
+    current_user: User,
+):
+    now = datetime.utcnow()
+
+    filters = {
+        "order_type": "sale",
+        "from_ts": start_of_day(now - timedelta(days=7)),
+        "to_ts": end_of_day(now),
+    }
+
+    rows = db_count_orders_grouped_by_status(
+        db=db,
+        company_id=current_user.company_id,
+        filters=filters,
+    )
+
+    result = {status: 0 for status in ("pending", "completed", "cancelled")}
+
+    for status, count in rows:
+        result[status] = count
+
+    return result

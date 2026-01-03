@@ -5,7 +5,8 @@ from web_app.api_clients.orders_client import (
     paginate_order_items as proxy_paginate_order_items,
     create_order as proxy_create_order,
     cancel_order as proxy_cancel_order,
-    complete_order as proxy_complete_order
+    complete_order as proxy_complete_order,
+    orders_this_week as proxy_orders_this_week
 )
 
 orders_bp = Blueprint('orders', __name__, url_prefix='/orders')
@@ -45,3 +46,8 @@ def cancel_order(order_id: int):
 @token_required
 def complete_order(order_id: int):
     return proxy_complete_order(order_id)
+
+@orders_bp.route("/order_counts")
+@token_required
+def orders_this_week():
+    return proxy_orders_this_week()

@@ -15,6 +15,7 @@ from api.services import (
     create_order,
     cancel_order,
     complete_order,
+    count_orders_by_status
 )
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/api/orders", tags=["orders"])
 def paginate_orders_endpoint(
     request: PaginationRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(["admin", "manager"])),
 ):
     return paginate_orders(
         db=db,
@@ -38,7 +39,7 @@ def paginate_order_items_endpoint(
     order_id: int,
     request: PaginationRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(["admin", "manager"])),
 ):
     return paginate_order_items(
         db=db,
@@ -64,7 +65,7 @@ def create_order_endpoint(
 def cancel_order_endpoint(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(["admin", "manager"])),
 ):
     return cancel_order(
         db=db,
@@ -76,10 +77,20 @@ def cancel_order_endpoint(
 def cancel_order_endpoint(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(["admin", "manager"])),
 ):
     return complete_order(
         db=db,
         order_id=order_id,
+        current_user=current_user,
+    )
+
+@router.get("/order_counts")
+def cancel_order_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "manager", "employee"])),
+):
+    return count_orders_by_status(
+        db=db,
         current_user=current_user,
     )

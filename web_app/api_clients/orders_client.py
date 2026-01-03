@@ -1,5 +1,5 @@
 from flask import jsonify
-from web_app.api_clients.utils import api_post, APIClientError
+from web_app.api_clients.utils import api_post, api_get, APIClientError
 
 
 def paginate_order(data):
@@ -35,6 +35,14 @@ def cancel_order(order_id: int):
 def complete_order(order_id: int):
     try:
         res = api_post(f"/api/orders/complete/{order_id}")
+        return res.json()
+
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code
+    
+def orders_this_week():
+    try:
+        res = api_get("/api/orders/order_counts")
         return res.json()
 
     except APIClientError as e:
