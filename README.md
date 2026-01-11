@@ -102,15 +102,20 @@ REST API, and web application.
 ### Prerequisites
 * Docker Desktop (running)
 * Environment Variables
- - DB_HOST
- - DB_USER
- - DB_PASSWORD
- - DB_NAME
- - JWT_SECRET
- - FLASK_SECRET_KEY
- - GITHUB_CLIENT_ID (optional, for GitHub OAuth)
- - GITHUB_CLIENT_SECRET (optional)
- - GITHUB_REDIRECT_URI (optional)
+```text
+DB_HOST=db
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=inventory_db
+
+
+FLASK_SECRET_KEY=f7b8a0de9c8043c6a21b7a8b53f7c4a0c3d2b19a91a05c98dfb0b02401eac83a
+JWT_SECRET=3DzaAtgSR5kkOrX_RrfqioNj2PeS6y2WFxxdRf3W8uF0xoHKkZyWojHz9V42LT9w4FA1dpw8BR1QKGIM5OXMkQ
+
+GITHUB_CLIENT_ID=Ov23liLvdRxg8dzXisBK
+GITHUB_CLIENT_SECRET=c029e2ce836b0426bc55837651c45b2ebaeb704e
+GITHUB_REDIRECT_URI=http://localhost:8500/api/users/auth/github/callback
+```
 
 ### Installation & Run
 1.  Open a terminal in the project root.
