@@ -6,7 +6,8 @@ from typing import List
 from api.models import User, Item, Order, OrderItem
 from api.schemas import (
     PaginationResponse,
-    MessageResponse
+    MessageResponse,
+    OrderCreateRequest
 )
 
 from api.db.order_db import (
@@ -87,7 +88,7 @@ def paginate_order_items(
         data=data,
     )
 
-def create_order(db: Session, data, current_user: User):
+def create_order(db: Session, data: OrderCreateRequest, current_user: User):
     order_type: str = validate_order_type(data.order_type)
     validated_items: List = []
 
@@ -131,14 +132,14 @@ def create_order(db: Session, data, current_user: User):
         db_insert_order_item(db, order_item)
 
         if order_type == "sale":
-            db_apply_stock_change(v["item"], -v["quantity"])
+            db_apply_stock_change(db, v["item"], -v["quantity"])
 
     return MessageResponse(
         message="Order was successfully created."
     )
 
 def cancel_order(db: Session, order_id: int, current_user: User):
-    order: Order = db_get_order_by_id(db, order_id)
+    order = db_get_order_by_id(db, order_id)
 
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -152,13 +153,13 @@ def cancel_order(db: Session, order_id: int, current_user: User):
 
     if order.status == "cancelled":
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Order is already cancelled"
         )
 
     if order.status == "completed":
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Completed orders cannot be cancelled"
         )
 
@@ -168,9 +169,9 @@ def cancel_order(db: Session, order_id: int, current_user: User):
         item = oi.item  # ORM relationship
 
         if order.order_type == "sale":
-            db_apply_stock_change(item, oi.quantity)
+            db_apply_stock_change(db, item, oi.quantity)
         elif order.order_type == "restock":
-            db_apply_stock_change(item, -oi.quantity)
+            db_apply_stock_change(db, item, -oi.quantity)
 
     db_change_order_status(order, "cancelled")
 
@@ -179,7 +180,7 @@ def cancel_order(db: Session, order_id: int, current_user: User):
     )
 
 def complete_order(db: Session, order_id: int, current_user: User):
-    order: Order = db_get_order_by_id(db, order_id)
+    order = db_get_order_by_id(db, order_id)
 
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -193,13 +194,13 @@ def complete_order(db: Session, order_id: int, current_user: User):
 
     if order.status == "cancelled":
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Order is already cancelled"
         )
 
     if order.status == "completed":
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Completed orders cannot be cancelled"
         )
 
@@ -209,7 +210,7 @@ def complete_order(db: Session, order_id: int, current_user: User):
         item = oi.item
 
         if order.order_type == "restock":
-            db_apply_stock_change(item, oi.quantity)
+            db_apply_stock_change(db, item, oi.quantity)
 
     db_change_order_status(order, "completed")
 
@@ -232,6 +233,7 @@ def count_orders_by_status(
     rows = db_count_orders_grouped_by_status(
         db=db,
         company_id=current_user.company_id,
+        is_superadmin=(current_user.role.name == "superadmin"),
         filters=filters,
     )
 

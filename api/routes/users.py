@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from api.db.user_db import get_oauth_providers, get_user_data_by_id
 from api.dependencies import get_current_user, require_role, get_db
 from api.models.user import User
 from api.schemas import (
@@ -9,6 +11,7 @@ from api.schemas import (
     RolesResponse, RoleOut, MessageResponse, 
     PaginationRequest, PaginationResponse
 )
+from api.schemas.user_schema import OAuthInfo
 from api.services import (
     login_user, 
     get_subroles_for_role, 
@@ -18,8 +21,10 @@ from api.services import (
     get_info_of_user,
     edit_user,
     toggle_user_is_active,
-    paginate_users
+    paginate_users,
+    get_current_user_info
 )
+from api.services.auth_service import handle_github_callback, start_github_link, start_github_login
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -30,6 +35,27 @@ def login_user_endpoint(
 ):
     return login_user(request.identifier, request.password, db)
 
+@router.get("/auth/github/login")
+def github_login():
+    redirect_url = start_github_login()
+    return {"redirect_url": redirect_url}
+
+@router.get("/auth/github/link")
+def link_github_account(
+    current_user = Depends(get_current_user),
+):
+    redirect_url = start_github_link(current_user.id)
+    return {"redirect_url": redirect_url}
+
+@router.get("/auth/github/callback")
+def github_callback(
+    code: str,
+    state: str,
+    db: Session = Depends(get_db),
+):
+    redirect_url = handle_github_callback(code, state, db)
+    return RedirectResponse(url=redirect_url)
+
 @router.post("/logout", response_model=MessageResponse)
 def logout_user_endpoint( 
     db: Session = Depends(get_db),
@@ -37,17 +63,13 @@ def logout_user_endpoint(
 ):
     return logout_user(current_user, db)
 
-# Is this needed?
+# For future profile edit
 @router.get("/me")
 def get_me_endpoint(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return {
-        "id": current_user.id,
-        "username": current_user.username,
-        "email": current_user.email,
-        "role": current_user.role.name if current_user.role else None,
-    }
+    return get_current_user_info(db, current_user)
 
 @router.get("/get_subroles", response_model=RolesResponse)
 def get_subroles_endpoint(
@@ -72,7 +94,7 @@ def create_user_endpoint(
 ):
     return create_user_account(request, db, current_user)
 
-@router.post("/edit_user/{user_id}", response_model=UserEditResponse)
+@router.post("/edit/{user_id}", response_model=UserEditResponse)
 def edit_user_endpoint(
     user_id: int,
     request : UserEditRequest, 

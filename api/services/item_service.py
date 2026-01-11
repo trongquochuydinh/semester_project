@@ -10,15 +10,15 @@ from api.schemas import (
 from api.models.user import User
 from api.models.item import Item
 
-from api.db.item_db import (
+from api.db import (
     insert_item as db_insert_item,
     get_item_data_by_id as db_get_item_data_by_id,
     edit_item as db_edit_item,
     paginate_items as db_paginate_items,
-    change_item_is_active as db_change_user_is_active
+    change_item_is_active as db_change_item_is_active
 )
 
-from api.services import (
+from api.services import ( 
     assert_company_access
 )
 
@@ -71,7 +71,10 @@ def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: Us
         updates=updates
     )
 
-    return ItemGetResponse(
+    if not updated_item:
+        raise HTTPException(status_code=406, detail="Failed to update the item.")
+
+    return ItemEditResponse(
         name=updated_item.name,
         price=updated_item.price,
         quantity=updated_item.quantity
@@ -111,7 +114,7 @@ def toggle_item_is_active(item_id: int, db: Session, current_user: User) -> Mess
 
     is_active = not item.is_active
 
-    db_change_user_is_active(item, is_active)
+    db_change_item_is_active(item, is_active)
 
     return MessageResponse(
         message=f"Item was successfully {'activated' if is_active else 'discontinued'}."

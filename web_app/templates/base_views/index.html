@@ -44,4 +44,11 @@
 
 <!-- PAGE LOGIC -->
 <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
+
+{% if error %}
+    <script>
+    alert("Login failed: {{ error }}");
+    </script>
+{% endif %}
+
 {% endblock %}

@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from werkzeug.security import generate_password_hash
-from email.utils import parseaddr
+from typing import Dict, Any
 
 from api.db.user_db import (
     insert_user,
@@ -9,16 +9,18 @@ from api.db.user_db import (
     get_user_data_by_id as db_get_user_data_by_id,
     edit_user as db_edit_user,
     change_user_is_active as db_change_user_is_active,
-    user_exists_by_username_or_email as db_user_exists_by_username_or_email
+    user_exists_by_username_or_email as db_user_exists_by_username_or_email,
+    get_oauth_providers as db_get_oauth_providers
 )
 
+from api.schemas.user_schema import LoginResponse, OAuthInfo
 from api.services.company_service import assert_company_access
 from api.services.role_service import resolve_assignable_role, get_subroles_for_role
 
 from sqlalchemy.orm import Session
 from api.models.user import User
 from api.utils import generate_password, validate_user_data
-from api.schemas import UserWriter, UserCreateResponse, UserCreateRequest, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse, MessageResponse, UserEditRequest
+from api.schemas import UserCreateResponse, UserCreateRequest, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse, MessageResponse, UserEditRequest
 
 def create_user_account(data: UserCreateRequest, db: Session, current_user: User) -> UserCreateResponse:
 
@@ -31,6 +33,7 @@ def create_user_account(data: UserCreateRequest, db: Session, current_user: User
         db,
         username=username,
         email=email,
+        exclude_user_id=None
     ):
         raise HTTPException(
             status_code=409,
@@ -108,7 +111,7 @@ def edit_user(
         db,
         is_superadmin=is_superadmin,
         current_user_company_id=current_user.company_id,
-        company_id=user.company_id,
+        company_id=data.company_id,
     )
 
     role = resolve_assignable_role(
@@ -124,7 +127,8 @@ def edit_user(
                 detail="You cannot change your own role",
             )
 
-    updates = {
+
+    updates: Dict[str, Any] = {
         "username": username,
         "email": email,
     }
@@ -149,7 +153,9 @@ def edit_user(
 
 def toggle_user_is_active(user_id: int, db: Session, current_user: User) -> MessageResponse:
     user = db_get_user_data_by_id(db, user_id)
-
+    if not user:
+        raise HTTPException(404, "User not found")
+    
     assert_company_access(
         db,
         is_superadmin=(current_user.role.name == "superadmin"),
@@ -165,11 +171,30 @@ def toggle_user_is_active(user_id: int, db: Session, current_user: User) -> Mess
 
     is_active = not user.is_active
 
-    db_change_user_is_active(user, is_active)
+    db_change_user_is_active(db, user, is_active)
 
     return MessageResponse(
         message=f"User was successfully {'enabled' if is_active else 'disabled'}."
     )
+
+def get_current_user_info(db: Session, current_user: User):
+    user = db_get_user_data_by_id(db, current_user.id)
+
+    if user is None:
+        # Defensive programming — should never happen
+        raise HTTPException(status_code=404, detail="User not found")
+
+    providers = db_get_oauth_providers(db, current_user.id)
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "role": user.role.name,
+        "company_id": user.company_id,
+        "oauth_info": OAuthInfo(
+            github="github" in providers
+        ),
+    }
 
 def get_info_of_user(user_id: int, db: Session, current_user: User) -> UserGetResponse:
     user = db_get_user_data_by_id(db, user_id)
@@ -224,8 +249,6 @@ def paginate_users(
         d["role_name"] = u.role.name if u.role else None
         d["company_name"] = u.company.name if u.company else None
         return d
-
-    # TODO: maybe give all the users of the company, but only those with lower hierarchy will be editable?
 
     return PaginationResponse(
         total=total,

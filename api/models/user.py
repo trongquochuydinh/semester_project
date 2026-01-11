@@ -1,27 +1,96 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
-from sqlalchemy.orm import relationship
+from datetime import datetime
+from sqlalchemy import String, Integer, ForeignKey, DateTime, Boolean
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
+
 from api.db.db_engine import Base
+
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False, index=True)
-    email = Column(String, unique=True, nullable=False, index=True)
-    password_hash = Column(String, nullable=False)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
-    status = Column(String, default="offline", nullable=False)
-    is_active = Column(Boolean, nullable=False, default=True)
-    last_login = Column(DateTime, nullable=True)
+    username: Mapped[str] = mapped_column(
+        String,
+        unique=True,
+        nullable=False,
+        index=True,
+    )
 
-    company_id = Column(
+    email: Mapped[str] = mapped_column(
+        String,
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String,
+        default="offline",
+        nullable=False,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+    )
+
+    last_login: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+    session_id: Mapped[Optional[str]] = mapped_column(
+        String,
+        nullable=True,
+    )
+
+    company_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=True
+        nullable=True,
     )
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
 
-    role = relationship("Role", back_populates="users")
-    company = relationship("Company", passive_deletes=True)
+    role_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("roles.id"),
+        nullable=False,
+    )
 
-    session_id = Column(String, nullable=True)
+    # -------------------------
+    # Relationships
+    # -------------------------
+
+    role = relationship(
+        "Role",
+        back_populates="users",
+    )
+
+    company = relationship(
+        "Company",
+        back_populates="users",
+        passive_deletes=True,
+    )
+
+    orders = relationship(
+        "Order",
+        back_populates="user",
+    )
+
+    oauth_accounts = relationship(
+        "UserOAuthAccount",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+

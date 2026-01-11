@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, session, request, redirect, url_for
-from web_app.config import FLASK_SECRET_KEY
+from web_app.config import FLASK_SECRET_KEY, CANONICAL_HOST
 from web_app.api_clients.utils import APIUnauthorizedError
 
 app = Flask(__name__)
@@ -16,6 +16,14 @@ def handle_api_unauthorized(e):
         return jsonify({"error": "Session expired"}), 401
 
     return redirect(url_for("auth.home"))
+
+@app.before_request
+def enforce_canonical_host():
+    if request.host != CANONICAL_HOST:
+        return redirect(
+            f"{request.scheme}://{CANONICAL_HOST}{request.full_path}",
+            code=301
+        )
 
 @app.route('/set_language')
 def set_language():

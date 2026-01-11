@@ -1,7 +1,11 @@
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+from typing import Optional
+
 from api.config import host, dbname, user, password
+
+DB: Optional[Engine] = None
 
 if any(db_info is None for db_info in [host, dbname, user, password]):
     db_info = [("host", host), ("dbname", dbname),
@@ -10,12 +14,10 @@ if any(db_info is None for db_info in [host, dbname, user, password]):
     none_variables = [name for name, value in db_info if value is None]
     print(f"The following variables are None: {', '.join(none_variables)}")
 
-    DB = None
-
 else:
     db_string = "postgresql://{2}:{3}@{0}/{1}".format(
         host, dbname, user, password)
-    DB: Engine = create_engine(
+    DB = create_engine(
         db_string,
         pool_size=10,        
         max_overflow=20,

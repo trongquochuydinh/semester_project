@@ -1,8 +1,8 @@
+from typing import Optional
 from fastapi import HTTPException
-from requests import Session
 from sqlalchemy.orm import Session
 
-from api.schemas import CompaniesResponse, CompanyOut, MessageResponse
+from api.schemas import CompaniesResponse, CompanyOut, MessageResponse, CompanyCreateRequest, CompanyEditRequest
 
 from api.models import User, Company
 from api.db.company_db import (
@@ -15,13 +15,16 @@ from api.db.company_db import (
     list_companies as db_list_companies
 )
 
-from api.utils import normalize_string
+from api.utils import normalize_string, validate_company_data
 
-def create_company(data, db: Session):
+def create_company(data: CompanyCreateRequest, db: Session) -> MessageResponse:
+
+    validate_company_data(data)
+
     existing = db_company_exists_by_name(db, data.name.strip().lower())
     if existing:
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Company with this name already exists"
         )
 
@@ -32,30 +35,29 @@ def create_company(data, db: Session):
 
     db_create_company(db, company)
 
-    return {
-        "message": "Company created successfully",
-        "company_id": company.id
-    }
+    return MessageResponse(
+        message="Company created successfully."
+    )
 
-def edit_company(company_id: int, db: Session, data) -> MessageResponse:
-
+def edit_company(company_id: int, db: Session, data: CompanyEditRequest) -> MessageResponse:
+    validate_company_data(data)
     company = db_get_company_data_by_id(db, company_id)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
     if db_company_exists_by_name_excluding_id(
         db=db,
-        name=normalize_string(data.get("name").lower(), "name"),
+        name=normalize_string(data.name.lower(), "name"),
         exclude_company_id=company_id,
     ):
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Company with this name already exists"
         )
 
     updates = {
-        "name": data.get("name").strip(),
-        "field": data.get("field"),
+        "name": data.name.strip(),
+        "field": data.field,
     }
 
     db_edit_company(
@@ -81,6 +83,9 @@ def delete_company(company_id: int, db: Session) -> MessageResponse:
 
 def get_info_of_company(company_id, db):
     company = db_get_company_data_by_id(db, company_id)
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
     company_dict = {
         "id" : company.id,
         "company_name" : company.name,
@@ -122,7 +127,7 @@ def assert_company_access(
     *,
     is_superadmin: bool,
     current_user_company_id: int,
-    company_id: int,
+    company_id: Optional[int],
 ) -> Company:
     company = db_get_company_data_by_id(db, company_id)
 

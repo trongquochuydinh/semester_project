@@ -1,11 +1,19 @@
+from datetime import datetime
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 
 # TODO: move login and logout schemas to auth_schema.py
 
 class LoginRequest(BaseModel):
     identifier: str
     password: str
+
+class OAuthInfo(BaseModel):
+    github: bool = False
+
+class OAuthStateData(TypedDict):
+    user_id: Optional[int]
+    expires_at: datetime
 
 class LoginResponse(BaseModel):
     id: int
@@ -14,6 +22,7 @@ class LoginResponse(BaseModel):
     token_type: str
     role: str
     company_id: Optional[int] = None
+    oauth_info: OAuthInfo
 
 class LogoutRequest(BaseModel):
     user_id: int

@@ -13,6 +13,7 @@ class APIUnauthorizedError(APIClientError):
     pass
 
 def api_request(method, endpoint, data=None, params=None):
+    endpoint = endpoint if endpoint.startswith("/") else f"/{endpoint}"
     url = f"{API_URL}{endpoint}"
     headers = {"Content-Type": "application/json"}
 

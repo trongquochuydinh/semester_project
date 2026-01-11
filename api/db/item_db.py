@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import asc
 from api.models.item import Item
@@ -8,8 +9,9 @@ def insert_item(db: Session, item: Item):
     db.add(item)
     db.flush()
 
-def apply_stock_change(item: Item, delta: int):
+def apply_stock_change(db: Session, item: Item, delta: int):
     item.quantity += delta
+    db.flush()
 
 def get_item_data_by_id(db: Session, item_id: int):
     return (
@@ -25,7 +27,7 @@ def edit_item(
     db: Session,
     item_id: int,
     updates: dict,
-) -> Item:
+) -> Optional[Item]:
 
     EDITABLE_FIELDS = {
         "name",

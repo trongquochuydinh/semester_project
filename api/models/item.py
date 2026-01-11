@@ -1,14 +1,12 @@
+from decimal import Decimal
 from sqlalchemy import (
-    Column,
-    Integer,
     String,
+    Integer,
     Numeric,
     Boolean,
     ForeignKey,
-    DateTime,
-    func
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.db.db_engine import Base
 
@@ -16,30 +14,55 @@ from api.db.db_engine import Base
 class Item(Base):
     __tablename__ = "items"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
 
-    name = Column(String, nullable=False)
-    sku = Column(String, nullable=False)
+    name: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
 
-    price = Column(Numeric(10, 2), nullable=False)
-    quantity = Column(Integer, nullable=False, default=0)
+    sku: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
 
-    is_active = Column(Boolean, nullable=False, default=True)
+    price: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
 
-    company_id = Column(
+    quantity: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+    )
+
+    company_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
     )
 
-    # relationships
+    # -------------------------
+    # Relationships
+    # -------------------------
+
     company = relationship(
         "Company",
-        back_populates="items"
+        back_populates="items",
     )
-    
+
     order_items = relationship(
         "OrderItem",
         back_populates="item",
-        passive_deletes=True
+        passive_deletes=True,
     )

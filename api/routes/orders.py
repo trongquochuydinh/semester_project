@@ -74,7 +74,7 @@ def cancel_order_endpoint(
     )
 
 @router.post("/complete/{order_id}")
-def cancel_order_endpoint(
+def complete_order_endpoint(
     order_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(["admin", "manager"])),
@@ -86,9 +86,9 @@ def cancel_order_endpoint(
     )
 
 @router.get("/order_counts")
-def cancel_order_endpoint(
+def get_order_counts_endpoint(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["admin", "manager", "employee"])),
+    current_user: User = Depends(get_current_user),
 ):
     return count_orders_by_status(
         db=db,

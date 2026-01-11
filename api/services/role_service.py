@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from typing import List
+from typing import List, Optional
 
 from api.db.role_db import (
     get_role_by_id,
@@ -23,10 +23,11 @@ def resolve_assignable_role(
 
     role = get_role_by_name(db, role_name)
     if not role:
-        raise HTTPException(status_code=400, detail="Role not found")
+        raise HTTPException(status_code=404, detail="Role not found")
 
     if current_role != "superadmin":
-        if role.rank < current_user.role.rank:
+        # cannot assign same or higher privilege role
+        if role.rank <= current_user.role.rank:
             raise HTTPException(
                 status_code=403,
                 detail="You are not allowed to assign this role",
@@ -37,15 +38,14 @@ def resolve_assignable_role(
 def get_subroles_for_role(
     db: Session,
     role_name: str,
-    *,
-    excluded_roles: List[str] = None,
+    excluded_roles: Optional[List[str]]
 ) -> List[Role]:
     role_name = role_name.lower()
     excluded = {r.lower() for r in excluded_roles or []}
 
     current_role = get_role_by_name(db, role_name)
     if not current_role:
-        raise HTTPException(status_code=400, detail="Invalid role")
+        raise HTTPException(status_code=403, detail="Invalid role")
 
     all_roles = get_all_roles(db)
 

@@ -8,6 +8,12 @@ class CompanyOut(BaseModel):
 class CompaniesResponse(BaseModel):
     companies: List[CompanyOut]
 
-class CompanyCreate(BaseModel):
+class CompanyWriter(BaseModel):
     name: str
     field: str
+
+class CompanyCreateRequest(CompanyWriter):
+    pass
+
+class CompanyEditRequest(CompanyWriter):
+    pass

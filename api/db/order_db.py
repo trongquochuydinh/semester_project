@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 from api.models import Order, User
@@ -43,7 +44,7 @@ def insert_order(db: Session, order: Order):
     db.add(order)
     db.flush()
 
-def get_order_by_id(db: Session, order_id: int) -> Order:
+def get_order_by_id(db: Session, order_id: int) -> Optional[Order]:
     return (
         db.query(Order)
         .options(
@@ -86,15 +87,16 @@ def count_orders(
 def count_orders_grouped_by_status(
     db: Session,
     company_id: int,
+    is_superadmin: bool,
     filters: dict,
 ):
-    query = (
-        db.query(
-            Order.status,
-            func.count(Order.id).label("count")
-        )
-        .filter(Order.company_id == company_id)
+    query = db.query(
+        Order.status,
+        func.count(Order.id).label("count")
     )
+
+    if not is_superadmin:
+        query = query.filter(Order.company_id == company_id)
 
     if "from_ts" in filters:
         query = query.filter(Order.created_at >= filters["from_ts"])

@@ -1,14 +1,15 @@
 import uuid
-from sqlalchemy import or_
+from sqlalchemy import or_, false
 from sqlalchemy.orm import Session, joinedload
 from api.models.user import User
 from api.models.role import Role
+from api.models.oauth import UserOAuthAccount
 from datetime import datetime
-from typing import List
+from typing import List, Optional, Set
 
 from api.utils import UserAlreadyLoggedInError
 
-def insert_user(db: Session, user: User) -> User:
+def insert_user(db: Session, user: User):
     db.add(user)
     db.flush()
 
@@ -17,7 +18,7 @@ def user_exists_by_username_or_email(
     *,
     username: str,
     email: str,
-    exclude_user_id: int = None,
+    exclude_user_id: Optional[int]
 ) -> bool:
     query = db.query(User).filter(
         or_(
@@ -52,6 +53,7 @@ def edit_user(
     user.role_id = role_id
 
     db.flush()
+    db.refresh(user)
     return user
 
 def change_user_status(user: User, status: str):
@@ -59,9 +61,11 @@ def change_user_status(user: User, status: str):
     if status == "online":
         user.last_login = datetime.now()
     
-def change_user_is_active(user: User, is_active: bool):
+def change_user_is_active(db: Session, user: User, is_active: bool):
     user.is_active = is_active
     clear_login_session(user)
+    db.flush()
+    db.refresh(user)
 
 def establish_login_session(user: User) -> str:
     if user.session_id is not None:
@@ -82,7 +86,7 @@ def clear_login_session_by_user_id(db: Session, user_id: int):
         clear_login_session(user)
         db.commit() 
 
-def get_user_data_by_id(db: Session, user_id: int) -> User:
+def get_user_data_by_id(db: Session, user_id: int) -> Optional[User]:
     return (
         db.query(User)
         .options(
@@ -93,7 +97,7 @@ def get_user_data_by_id(db: Session, user_id: int) -> User:
         .first()
     )
 
-def get_user_by_identifier(db: Session, identifier: str) -> User:
+def get_user_by_identifier(db: Session, identifier: str) -> Optional[User]:
     return (
         db.query(User)
         .options(
@@ -107,10 +111,18 @@ def get_user_by_identifier(db: Session, identifier: str) -> User:
         .first()
     )
 
+def get_oauth_providers(db: Session, user_id: int) -> Set[str]:
+    rows = (
+        db.query(UserOAuthAccount.provider)
+        .filter(UserOAuthAccount.user_id == user_id)
+        .all()
+    )
+    return {row.provider for row in rows}
+
 def paginate_users(
     db: Session,
     filters: dict,
-    allowed_roles: List[str],
+    allowed_roles: Optional[Set[str]],
     company_id: int,
     limit: int,
     offset: int,
@@ -137,8 +149,7 @@ def paginate_users(
                 .filter(Role.name.in_(allowed_roles))
             )
         else:
-            # Explicitly no allowed roles
-            query = query.filter(False)
+            query = query.filter(false())
 
     # Company restriction
     if company_id is not None:

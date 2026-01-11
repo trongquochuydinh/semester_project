@@ -50,6 +50,29 @@ CREATE TABLE users (
 );
 
 -- -------------------------
+-- OAuth accounts (external identity providers)
+-- -------------------------
+CREATE TABLE user_oauth_accounts (
+    id SERIAL PRIMARY KEY,
+
+    user_id INT NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    provider TEXT NOT NULL,                 -- e.g. 'github'
+    provider_user_id TEXT NOT NULL,         -- GitHub user ID (string-safe)
+    provider_email TEXT,                    -- optional, informational
+
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+
+    -- One GitHub account can be linked only once
+    UNIQUE (provider, provider_user_id),
+
+    -- One user can link a provider only once
+    UNIQUE (user_id, provider)
+);
+
+-- -------------------------
 -- Seed users
 -- -------------------------
 

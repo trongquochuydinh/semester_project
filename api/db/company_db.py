@@ -1,8 +1,10 @@
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+
 from api.models.company import Company
 
-def get_company_data_by_id(db: Session, company_id: int) -> Company:
+def get_company_data_by_id(db: Session, company_id: Optional[int]) -> Optional[Company]:
     return (
         db.query(Company)
         .filter(Company.id == company_id)
@@ -13,7 +15,7 @@ def company_exists_by_name_excluding_id(
     db: Session,
     name: str,
     exclude_company_id: int,
-) -> Company:
+) -> Optional[Company]:
     return (
         db.query(Company)
         .filter(
@@ -45,8 +47,8 @@ def edit_company(
 def list_companies(
     db: Session,
     is_superadmin: bool,
-    user_company_id: int = None,
-):
+    user_company_id: Optional[int] = None,
+) -> List[Company]:
     query = db.query(Company)
 
     if not is_superadmin:
@@ -61,6 +63,7 @@ def create_company(db: Session, company: Company):
 
 def delete_company(db: Session, company: Company):
     db.delete(company)
+    db.flush()
 
 def company_exists_by_name(db: Session, name: str):
     return (

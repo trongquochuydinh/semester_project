@@ -33,6 +33,7 @@ def paginate_order_items(
 
 def insert_order_item(db: Session, order_item: OrderItem):
     db.add(order_item)
+    db.flush()
 
 def get_order_items(db: Session, order_id: int):
     return (

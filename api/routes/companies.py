@@ -1,14 +1,11 @@
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from typing import List
+from sqlalchemy.orm import Session
 
-from requests import Session
-from api.db.db_engine import SessionLocal
 from api.dependencies import require_role, get_db
-from api.models.company import Company
 from api.models.user import User
 from api.schemas import(
-    CompanyCreate,
+    CompanyCreateRequest,
+    CompanyEditRequest,
     PaginationRequest
 )
 
@@ -32,7 +29,7 @@ def get_companies_endpoint(
 
 @router.post("/create")
 def create_company_endpoint(
-    data: CompanyCreate, 
+    data: CompanyCreateRequest, 
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(["superadmin"]))
 ):
@@ -49,7 +46,7 @@ def get_company_endpoint(
 @router.post("/edit/{company_id}")
 def edit_company_endpoint(
     company_id: int, 
-    data: dict,
+    data: CompanyEditRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(["superadmin"]))
 ):

@@ -69,7 +69,7 @@
               <span>Login with</span>
             </div>
             <div class="row">
-              <div class="col-4">
+              <!-- <div class="col-4">
                 <div class="d-grid">
                   <button type="button" class="btn mt-2 btn-light-primary bg-light text-muted">
                     <img src="{{ url_for('static', filename='images/authentication/google.svg') }}" alt="img"> <span class="d-none d-sm-inline-block"> Google</span>
@@ -82,12 +82,21 @@
                     <img src="{{ url_for('static', filename='images/authentication/twitter.svg') }}" alt="img"> <span class="d-none d-sm-inline-block"> Twitter</span>
                   </button>
                 </div>
-              </div>
+              </div> -->
               <div class="col-4">
                 <div class="d-grid">
-                  <button type="button" class="btn mt-2 btn-light-primary bg-light text-muted">
-                    <img src="{{ url_for('static', filename='images/authentication/facebook.svg') }}" alt="img"> <span class="d-none d-sm-inline-block"> Facebook</span>
-                  </button>
+                  <a
+                    href="{{ url_for('auth.github_login') }}"
+                    class="btn mt-2 btn-light-primary bg-light text-muted"
+                  >
+                    <img
+                      src="{{ url_for('static', filename='images/authentication/github-mark.svg') }}"
+                      width="20"
+                      height="20"
+                      alt="GitHub"
+                    >
+                    <span class="d-none d-sm-inline-block"> GitHub</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -131,10 +140,8 @@
   
   
   <script>font_change("Public-Sans");</script>
-  
-    
- 
+
 </body>
 <!-- [Body] end -->
 
-</html>
+  </html>

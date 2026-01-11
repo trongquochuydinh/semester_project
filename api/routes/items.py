@@ -66,17 +66,3 @@ def get_item_endpoint(
     current_user: User = Depends(require_role(["admin", "manager"]))
 ):
     return get_item(item_id, db, current_user)
-
-# These need orders and item-orders to function
-
-@router.get("/popular_items")
-def get_most_sold_items_endpoint():
-    return
-
-@router.get("/unpopular_items")
-def get_least_sold_items_endpoint():
-    return
-
-@router.get("/num_of_items_sold_this_week")
-def get_num_of_items_sold_this_week_endpoint():
-    return

@@ -1,48 +1,72 @@
+from datetime import datetime
 from sqlalchemy import (
-    Column,
     Integer,
-    Text,
-    TIMESTAMP,
+    String,
     ForeignKey,
-    CheckConstraint,
-    func
+    DateTime,
 )
-from sqlalchemy.orm import relationship
-from api.db.db_engine import Base  # adjust import to your project
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from api.db.db_engine import Base
 
 
 class Order(Base):
     __tablename__ = "orders"
 
-    id = Column(Integer, primary_key=True)
-
-    status = Column(Text, nullable=False, server_default="pending")
-
-    order_type = Column(Text, nullable=False)
-
-    created_at = Column(TIMESTAMP, server_default=func.now())
-
-    completed_at = Column(TIMESTAMP, nullable=True)
-
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
-    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
-
-    __table_args__ = (
-        CheckConstraint(
-            "status IN ('pending', 'completed', 'cancelled')",
-            name="orders_status_check"
-        ),
-        CheckConstraint(
-            "order_type IN ('sale', 'restock')",
-            name="orders_order_type_check"
-        ),
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
     )
 
-    user = relationship("User")
-    company = relationship("Company")
+    status: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
+
+    order_type: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    completed_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    company_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("companies.id"),
+        nullable=False,
+    )
+
+    # -------------------------
+    # Relationships
+    # -------------------------
+
+    user = relationship(
+        "User",
+        back_populates="orders",
+    )
+
+    company = relationship(
+        "Company",
+        back_populates="orders",
+    )
+
     items = relationship(
         "OrderItem",
         back_populates="order",
-        passive_deletes=True
+        cascade="all, delete-orphan",
     )

@@ -1,9 +1,26 @@
-from flask import session, jsonify
+from flask import redirect, session, jsonify
+from typing import Optional
+
 from web_app.api_clients.utils import api_post, api_get, APIClientError
 
 
+def build_user_session(user_data: dict):
+    """
+    Populate Flask session from API user payload.
+    Shared by password and OAuth login.
+    """
+    session["user"] = {
+        "id": user_data["id"],
+        "username": user_data["username"],
+        "role": user_data["role"],
+        "oauth_info": user_data.get("oauth_info", {}),
+    }
+
+    session["role"] = user_data["role"]
+    session["company_id"] = user_data["company_id"]
+
+
 def login_user(identifier, password):
-    """Authenticate the user and store session/token on success."""
     try:
         res = api_post("/api/users/login", {
             "identifier": identifier,
@@ -11,16 +28,14 @@ def login_user(identifier, password):
         })
 
         user_data = res.json()
-        session["user"] = {
-            "id": user_data["id"],
-            "username": user_data["username"],
-            "role": user_data["role"]
-        }
-        session["token"] = user_data["access_token"]
-        session["role"] = user_data["role"]
-        session["company_id"] = user_data["company_id"]
 
-        return jsonify({"success": True, "user": session["user"]})
+        session["token"] = user_data["access_token"]
+        build_user_session(user_data)
+
+        return jsonify({
+            "success": True,
+            "user": session["user"]
+        })
 
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
@@ -31,7 +46,31 @@ def login_user(identifier, password):
             "detail": str(e)
         }), 500
 
+def oauth_login_success(token: Optional[str]):
+    # OAuth LOGIN → new token
+    if token:
+        session["token"] = token
 
+    # OAuth LOGIN or LINK → refresh user snapshot
+    res = api_get("/api/users/me")
+    user_data = res.json()
+
+    build_user_session(user_data)
+
+def login_github():
+    res = api_get("/api/users/auth/github/login")
+    redirect_url = res.json()["redirect_url"]
+    return redirect_url
+
+def link_github():
+    try:
+        res = api_get("/api/users/auth/github/link")
+        redirect_url = res.json()["redirect_url"]
+        return redirect(redirect_url)
+
+    except APIClientError as e:
+        return jsonify({"error": e.message}), e.status_code
+    
 def get_subroles():
     """Get allowed subroles for the current user."""
     try:
@@ -95,7 +134,7 @@ def get_user_count():
     
 def edit_user(user_id, data):
     try:
-        res = api_post(f"/api/users/edit_user/{user_id}", data)
+        res = api_post(f"/api/users/edit/{user_id}", data)
         resp_json = res.json()
 
         return jsonify({
