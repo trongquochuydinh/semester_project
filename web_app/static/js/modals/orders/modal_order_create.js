@@ -2,11 +2,11 @@ import { ORDER_FIELDS } from "../../schemas/schema_orders.js";
 import { extractOrderPayload, renderOrderItemActions } from "./modal_order.utils.js";
 import { ORDER_SCHEMA_SELECT } from "../../schemas/schema_orders.js";
 import { createPaginatedTable } from "../../elements/table.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 export const CREATE_ORDER_MODAL = {
   id: "createOrderModal",
-  title: "Create Order",
+  title: t("CreateOrder"),
   fields: ORDER_FIELDS,
 
   onLoad: async () => {

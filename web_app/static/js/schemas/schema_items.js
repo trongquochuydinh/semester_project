@@ -1,26 +1,28 @@
+import { t } from "../utils.js";
+
 export const ITEMS_SCHEMA_MANAGE = {
   columns: [
     { key: "id", label: "ID" },
-    { key: "name", label: "Name" },
+    { key: "name", label: t("Name") },
     { key: "sku", label: "SKU" },
-    { key: "price", label: "Price (Czk)" },
-    { key: "quantity", label: "Quantity" },
-    { key: "is_active", label: "Status" },
-    { key: "company_name", label: "Company" },
-    { key: "__actions__", label: "Actions" }
+    { key: "price", label: t("Price (Czk)") },
+    { key: "quantity", label: t("Quantity") },
+    { key: "is_active", label: t("status") },
+    { key: "company_name", label: t("company") },
+    { key: "__actions__", label: t("actions") }
   ],
   headerButton: `
     <button class="btn btn-primary btn-sm" data-action="open-create-item-modal">
-      Create Item entry
+      ${"CreateItemEntry"}
     </button>
   `
 };
 
 export const ITEMS_SCHEMA_VIEW = {
   columns: [
-    { key: "name", label: "Name" },
-    { key: "price", label: "Price (Czk)" },
-    { key: "quantity", label: "Quantity" }
+    { key: "name", label: t("Name") },
+    { key: "price", label: t("Price (Czk)") },
+    { key: "quantity", label: t("Quantity") }
   ],
   headerButton: ""
 };
@@ -28,12 +30,12 @@ export const ITEMS_SCHEMA_VIEW = {
 export const ITEM_FIELDS = [
   {
     id: "name",
-    label: "Name",
+    label: t("Name"),
     html: `<input id="name" class="form-control" required>`
   },
   {
     id: "price",
-    label: "Price",
+    label: t("Price (Czk)"),
     html: `
       <input
         id="price"
@@ -47,7 +49,7 @@ export const ITEM_FIELDS = [
   },
   {
     id: "quantity",
-    label: "Quantity",
+    label: t("Quantity"),
     html: `
       <input
         id="quantity"

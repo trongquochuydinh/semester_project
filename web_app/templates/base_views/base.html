@@ -45,7 +45,7 @@
                 <a href="/" class="b-brand text-primary">
                     <img src="{{ url_for('static', filename='images/favicon.svg') }}" class="img-fluid logo-sm"
                         alt="logo">
-                    <span class="b-title">Warehouse</span>
+                    <span class="b-title">{{ t('Warehouse') }}</span>
                 </a>
             </div>
             <div class="navbar-content">
@@ -63,7 +63,7 @@
 
                     {% if role in ['superadmin', 'admin', 'manager'] %}
                         <li class="pc-item pc-caption">
-                            <label>Management</label>
+                            <label>{{ t("Management") }}</label>
                             <i class="ti ti-dashboard"></i>
                         </li>
 
@@ -71,7 +71,7 @@
                         <li class="pc-item">
                             <a href="/users/management" class="pc-link">
                                 <span class="pc-micon"><i class="ti ti-user"></i></span>
-                                <span class="pc-mtext">Users</span>
+                                <span class="pc-mtext">{{ t("Users") }}</span>
                             </a>
                         </li>
 
@@ -80,7 +80,7 @@
                             <li class="pc-item">
                                 <a href="/companies/management" class="pc-link">
                                     <span class="pc-micon"><i class="ti ti-building"></i></span>
-                                    <span class="pc-mtext">Companies</span>
+                                    <span class="pc-mtext">{{ t("Companies") }}</span>
                                 </a>
                             </li>
                         {% endif %}
@@ -90,14 +90,14 @@
                             <li class="pc-item">
                                 <a href="/items/management" class="pc-link">
                                     <span class="pc-micon"><i class="ti ti-list"></i></span>
-                                    <span class="pc-mtext">Items</span>
+                                    <span class="pc-mtext">{{ t("Items") }}</span>
                                 </a>
                             </li>
 
                             <li class="pc-item">
                                 <a href="/orders/management" class="pc-link">
                                     <span class="pc-micon"><i class="ti ti-clipboard"></i></span>
-                                    <span class="pc-mtext">Orders</span>
+                                    <span class="pc-mtext">{{ t("Orders") }}</span>
                                 </a>
                             </li>
                         {% endif %}
@@ -132,7 +132,7 @@
 
             <div class="ms-auto">
             <ul class="list-unstyled">
-                <li class="dropdown pc-h-item">
+                <!-- <li class="dropdown pc-h-item">
                 <a
                     class="pc-head-link dropdown-toggle arrow-none me-0"
                     data-bs-toggle="dropdown"
@@ -206,7 +206,7 @@
                     <a href="#!" class="link-primary">View all</a>
                     </div>
                 </div>
-                </li>
+                </li> -->
                 <li class="dropdown pc-h-item header-user-profile">
                 <a
                     class="pc-head-link dropdown-toggle arrow-none me-0"

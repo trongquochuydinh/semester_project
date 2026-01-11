@@ -1,10 +1,10 @@
 import { COMPANY_FIELDS } from "../../schemas/schema_companies.js";
 import { validateCompanyModal, extractCompanyPayload } from "./modal_company.utils.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 export const CREATE_COMPANY_MODAL = {
   id: "createCompanyModal",
-  title: "Create Company",
+  title: t("CreateCompany"),
   fields: COMPANY_FIELDS,
 
   onSubmit: async (writeResult) => {

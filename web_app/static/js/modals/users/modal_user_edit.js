@@ -1,7 +1,7 @@
 import { USER_FIELDS } from "../../schemas/schema_users.js";
 import { loadRoles, loadCompanies } from "./modal_user.loaders.js";
 import { validateModal, extractUserPayload } from "./modal_user.utils.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 async function populateUserData(userId) {
   const modal = document.getElementById("editUserModal");
@@ -15,7 +15,7 @@ async function populateUserData(userId) {
 
 export const EDIT_USER_MODAL = {
   id: "editUserModal",
-  title: "Edit User",
+  title: t("EditUser"),
   fields: USER_FIELDS,
 
   onLoad: async () => {

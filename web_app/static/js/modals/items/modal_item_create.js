@@ -5,11 +5,11 @@ import {
   renderSuccess,
   renderError
 } from "./modal_item.utils.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 export const CREATE_ITEM_MODAL = {
   id: "createItemModal",
-  title: "Create Item Entry",
+  title: t("CreateItemEntry"),
   fields: ITEM_FIELDS,
 
   onSubmit: async (writeResult) => {

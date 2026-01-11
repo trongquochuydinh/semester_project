@@ -1,11 +1,11 @@
 import { COMPANY_FIELDS } from "../../schemas/schema_companies.js";
 import { loadCompanyData } from "./modal_company.loaders.js";
 import { validateCompanyModal, extractCompanyPayload } from "./modal_company.utils.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 export const EDIT_COMPANY_MODAL = {
   id: "editCompanyModal",
-  title: "Edit Company",
+  title: t("EditCompany"),
   fields: COMPANY_FIELDS,
 
   onLoad: async () => {

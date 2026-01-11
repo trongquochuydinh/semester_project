@@ -1,3 +1,5 @@
+import { t } from "../../utils.js";
+
 export function renderUserActions(row) {
   const isDisabled = row.is_active === false;
 
@@ -6,7 +8,7 @@ export function renderUserActions(row) {
       class="btn btn-sm btn-outline-primary"
       data-action="edit-user"
       data-id="${row.id}">
-      Edit
+      ${t("Edit")}
     </button>
 
     <button 
@@ -15,7 +17,7 @@ export function renderUserActions(row) {
       } ms-2"
       data-action="toggle-user"
       data-id="${row.id}">
-      ${isDisabled ? "Enable" : "Disable"}
+      ${isDisabled ? t("Enable") : t("Disable")}
     </button>
   `;
 }

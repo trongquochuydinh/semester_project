@@ -4,6 +4,7 @@ import { CREATE_USER_MODAL } from "../../modals/users/modal_user_create.js";
 import { EDIT_USER_MODAL } from "../../modals/users/modal_user_edit.js";
 import { toggleUser } from "./user_handlers.js";
 import { renderUserActions } from "./user_actions.js";
+import { t } from "../../utils.js";
 
 initManagementPage({
   modals: [
@@ -32,7 +33,7 @@ initManagementPage({
 
   table: {
     containerId: "users-table",
-    title: "Users",
+    title: t("Users"),
     schema: USERS_SCHEMA_MANAGE,
     tableName: "users",
     pageSize: 5,

@@ -4,6 +4,7 @@ import { CREATE_ITEM_MODAL } from "../../modals/items/modal_item_create.js";
 import { EDIT_ITEM_MODAL } from "../../modals/items/modal_item_edit.js";
 import { toggleItem } from "./item_handlers.js";
 import { renderItemActions } from "./item_actions.js";
+import { t } from "../../utils.js";
 
 initManagementPage({
   modals: [
@@ -32,7 +33,7 @@ initManagementPage({
 
   table: {
     containerId: "items-table",
-    title: "Items",
+    title: t("Items"),
     schema: ITEMS_SCHEMA_MANAGE,
     tableName: "items",
     pageSize: 5,

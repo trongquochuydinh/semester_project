@@ -1,10 +1,10 @@
 import { initManagementPage } from "../management_page.js";
 import { ORDER_SCHEMA_MANAGE } from "../../schemas/schema_orders.js";
 import { CREATE_ORDER_MODAL } from "../../modals/orders/modal_order_create.js";
-import { EDIT_ORDER_MODAL } from "../../modals/orders/modal_order_edit.js";
 import { ORDER_DETAILS_MODAL } from "../../modals/orders/modal_order_details.js";
 import { cancelOrder } from "./order_handlers.js";
 import { renderOrderActions } from "./order_actions.js";
+import { t } from "../../utils.js";
 
 initManagementPage({
   modals: [
@@ -38,7 +38,7 @@ initManagementPage({
 
   table: {
     containerId: "orders-table",
-    title: "Orders",
+    title: t("Orders"),
     schema: ORDER_SCHEMA_MANAGE,
     tableName: "orders",
     pageSize: 5,

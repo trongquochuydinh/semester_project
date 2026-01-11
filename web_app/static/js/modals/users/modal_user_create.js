@@ -1,11 +1,11 @@
 import { USER_FIELDS } from "../../schemas/schema_users.js";
 import { loadRoles, loadCompanies } from "./modal_user.loaders.js";
 import { validateModal, extractUserPayload } from "./modal_user.utils.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 export const CREATE_USER_MODAL = {
   id: "createUserModal",
-  title: "Create User",
+  title: t("CreateUser"),
   fields: USER_FIELDS,
 
   onLoad: async () => {

@@ -1,3 +1,5 @@
+import { t } from "../../utils.js";
+
 export function renderItemActions(row) {
   const isInactive = row.is_active === "Discontinued";
 
@@ -6,7 +8,7 @@ export function renderItemActions(row) {
       class="btn btn-sm btn-outline-primary"
       data-action="edit-item"
       data-id="${row.id}">
-      Edit
+      ${t("Edit")}
     </button>
 
     <button 
@@ -15,7 +17,7 @@ export function renderItemActions(row) {
       } ms-2"
       data-action="toggle-item"
       data-id="${row.id}">
-      ${isInactive ? "Activate" : "Discontinue"}
+      ${isInactive ? t("Activate") : t("Discontinue")}
     </button>
   `;
 }

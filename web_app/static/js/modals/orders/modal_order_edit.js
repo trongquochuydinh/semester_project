@@ -1,11 +1,11 @@
 import { ORDER_FIELDS } from "../../schemas/schema_orders.js";
 import { extractOrderPayload } from "./modal_order.utils.js";
 import { loadOrderData } from "./modal_order.loaders.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 export const EDIT_ORDER_MODAL = {
   id: "editOrderModal",
-  title: "Edit Order",
+  title: t("EditOrder"),
   fields: ORDER_FIELDS,
 
   onLoad: async () => {

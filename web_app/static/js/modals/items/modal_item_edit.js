@@ -6,11 +6,11 @@ import {
   renderSuccess,
   renderError
 } from "./modal_item.utils.js";
-import { apiFetch } from "../../utils.js";
+import { t, apiFetch } from "../../utils.js";
 
 export const EDIT_ITEM_MODAL = {
   id: "editItemModal",
-  title: "Edit Item Entry",
+  title: t("EditItemEntry"),
   fields: ITEM_FIELDS,
 
   onLoad: async () => {

@@ -1,10 +1,11 @@
 import { loadOrderData } from "./modal_order.loaders.js";
 import { createPaginatedTable } from "../../elements/table.js";
 import { ITEMS_SCHEMA_VIEW } from "../../schemas/schema_items.js"
+import { t } from "../../utils.js";
 
 export const ORDER_DETAILS_MODAL = {
   id: "orderDetailsModal",
-  title: "Order Details",
+  title: t("OrderDetails"),
   fields: [],
 
   onLoad: async () => {

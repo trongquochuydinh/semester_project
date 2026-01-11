@@ -4,6 +4,7 @@ import { CREATE_COMPANY_MODAL } from "../../modals/companies/modal_company_creat
 import { EDIT_COMPANY_MODAL } from "../../modals/companies/modal_company_edit.js";
 import { deleteCompany } from "./company_handers.js";
 import { renderCompanyActions } from "./company_actions.js";
+import { t } from "../../utils.js";
 
 initManagementPage({
   modals: [
@@ -32,7 +33,7 @@ initManagementPage({
 
   table: {
     containerId: "companies-table",
-    title: "Companies",
+    title: t("Companies"),
     schema: COMPANIES_SCHEMA_MANAGE,
     tableName: "companies",
     pageSize: 10,
