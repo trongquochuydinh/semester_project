@@ -241,6 +241,10 @@ Users can only access data that belongs to their assigned company.
 - Role and company checks are applied consistently across the application.
 - Unauthorized actions are rejected with appropriate error responses.
 
+### 5. Link Github
+
+- Link account to Github using the button in the user profile menu.
+
 ## Testing
 
 The project includes automated tests for backend logic and API endpoints.
