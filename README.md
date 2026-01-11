@@ -151,7 +151,7 @@ Once Docker is running, you can access the following services:
 * **Web Application:** [http://localhost:8000](http://localhost:8000)
 * **API:** [http://localhost:8500](http://localhost:8500)
 * **Adminer:** [http://localhost:8080](http://localhost:8080)
-* **MongoDB:** `localhost:5432`
+* **PostgreSQL:** `localhost:5432`
 
 ---
 
