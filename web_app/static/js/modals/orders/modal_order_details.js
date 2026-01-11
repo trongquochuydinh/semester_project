@@ -21,7 +21,7 @@ export const ORDER_DETAILS_MODAL = {
 
     await createPaginatedTable({
       container,
-      title: "Ordered Items",
+      title: t("Ordered Items"),
       schema: ITEMS_SCHEMA_VIEW,
       tableName: `orders/${orderId}/items`,
       pageSize: 5,

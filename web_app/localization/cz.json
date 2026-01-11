@@ -50,5 +50,7 @@
     "Details": "Detaily",
     "Cancel": "Zrušit",
     "Enable": "Povolit",
-    "Disable": "Zakázat"
+    "Disable": "Zakázat",
+    "Ordered Items": "Objednané zboží",
+    "Low stock on items (<= 20)": "Nízké zásoby zboží (<= 20)"
 }

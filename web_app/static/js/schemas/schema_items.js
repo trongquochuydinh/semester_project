@@ -13,7 +13,7 @@ export const ITEMS_SCHEMA_MANAGE = {
   ],
   headerButton: `
     <button class="btn btn-primary btn-sm" data-action="open-create-item-modal">
-      ${"CreateItemEntry"}
+      ${t("CreateItemEntry")}
     </button>
   `
 };

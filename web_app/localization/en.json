@@ -46,5 +46,7 @@
     "Edit": "Edit",
     "Delete": "Delete",
     "Activate": "Activate",
-    "Discontinue": "Discontinue"
+    "Discontinue": "Discontinue",
+    "Ordered Items": "Ordered Items",
+    "Low stock on items (<= 20)": "Low stock on items (<= 20)"
 }

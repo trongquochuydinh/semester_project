@@ -17,7 +17,7 @@ if __name__ == "__main__":
         uvicorn.run(
             app,
             host="0.0.0.0",
-            port=os.environ.get("PORT_APP", 8500)
+            port=int(os.environ.get("PORT_APP", 8500))
         )
 
     run_service()
