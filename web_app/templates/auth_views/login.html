@@ -141,6 +141,12 @@
   
   <script>font_change("Public-Sans");</script>
 
+  {% if error %}
+    <script>
+      alert("Login failed: {{ error }}");
+    </script>
+  {% endif %}
+  
 </body>
 <!-- [Body] end -->
 
