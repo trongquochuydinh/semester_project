@@ -159,12 +159,12 @@ Once Docker is running, you can access the following services:
 
 The system comes pre-seeded with the following users:
 
-Username | Email | Password |
-| :--- | :--- | :--- | :--- |
-| **superadmin** | `superadmin@example.com` | `superadmin` |
-| **admin** | `admin@technova.com` | `admin` | 
-| **manager** | `manager@technova.com` | `manager` |
-| **employee** | `employee@technova.com` | `employee` | 
+| Username       | Email                     | Password    |
+|----------------|---------------------------|-------------|
+| **superadmin** | `superadmin@example.com`  | `superadmin`|
+| **admin**      | `admin@technova.com`      | `admin`     |
+| **manager**   | `manager@technova.com`    | `manager`   |
+| **employee**  | `employee@technova.com`   | `employee`  |
 
 ---
 
