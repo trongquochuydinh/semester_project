@@ -264,3 +264,9 @@ To run the type check:
     ```bash
     mypy .
     ```
+
+### API Documentation
+Run API container and visit:
+```text
+http://localhost:8500/docs
+```
