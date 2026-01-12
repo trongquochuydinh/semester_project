@@ -39,7 +39,7 @@ def paginate_orders(
     filters: dict,
     company_id: int,
 ):
-    
+    """Get paginated order list with formatted dates."""
     total, results = db_paginate_orders(
         db=db,
         filters=filters,
@@ -49,6 +49,7 @@ def paginate_orders(
     )
 
     def serialize(i):
+        """Convert order to dict with formatted timestamps."""
         d = {c.name: getattr(i, c.name) for c in i.__table__.columns}
         d["created_at_fmt"] = getattr(i, "created_at_fmt", None)
         d["completed_at_fmt"] = getattr(i, "completed_at_fmt", None)
@@ -66,6 +67,7 @@ def paginate_order_items(
     limit: int,
     offset: int,
 ):
+    """Get paginated items within an order."""
     total, results = db_paginate_order_items(
         db=db,
         order_id=order_id,
@@ -74,11 +76,12 @@ def paginate_order_items(
         offset=offset,
     )
 
+    # Convert results to simplified format
     data = []
     for item, ordered_quantity, unit_price in results:
         d = {
             "name": item.name,
-            "price": unit_price,
+            "price": unit_price,  # Historical price
             "quantity": ordered_quantity,
         }
         data.append(d)
@@ -89,14 +92,18 @@ def paginate_order_items(
     )
 
 def create_order(db: Session, data: OrderCreateRequest, current_user: User):
+    """Create new order with inventory validation."""
+    # Validate order type
     order_type: str = validate_order_type(data.order_type)
     validated_items: List = []
 
+    # Validate all items and check company access
     for order_item in data.items:
         item: Item = db_get_item_data_by_id(db, order_item["item_id"])
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
+        # Ensure item belongs to user's company
         assert_company_access(
             db=db,
             is_superadmin=False,
@@ -104,6 +111,7 @@ def create_order(db: Session, data: OrderCreateRequest, current_user: User):
             company_id=item.company_id,
         )
 
+        # Validate item quantity and availability
         validated = validate_order_item(
             item=item,
             quantity=order_item["quantity"],
@@ -112,6 +120,7 @@ def create_order(db: Session, data: OrderCreateRequest, current_user: User):
 
         validated_items.append(validated)
 
+    # Create order
     order = Order(
         status="pending",
         order_type=order_type,
@@ -121,16 +130,18 @@ def create_order(db: Session, data: OrderCreateRequest, current_user: User):
 
     db_insert_order(db, order)
 
+    # Add order items and apply inventory changes
     for v in validated_items:
         order_item = OrderItem(
             order_id=order.id,
             item_id=v["item"].id,
             quantity=v["quantity"],
-            unit_price=v["unit_price"],
+            unit_price=v["unit_price"],  # Capture current price
         )
 
         db_insert_order_item(db, order_item)
 
+        # Deduct inventory for sales
         if order_type == "sale":
             db_apply_stock_change(db, v["item"], -v["quantity"])
 
@@ -139,11 +150,13 @@ def create_order(db: Session, data: OrderCreateRequest, current_user: User):
     )
 
 def cancel_order(db: Session, order_id: int, current_user: User):
+    """Cancel order and restore inventory."""
     order = db_get_order_by_id(db, order_id)
 
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
+    # Validate company access
     assert_company_access(
         db=db,
         is_superadmin=False,
@@ -151,6 +164,7 @@ def cancel_order(db: Session, order_id: int, current_user: User):
         company_id=order.company_id
     )
 
+    # Check order status
     if order.status == "cancelled":
         raise HTTPException(
             status_code=409,
@@ -163,15 +177,17 @@ def cancel_order(db: Session, order_id: int, current_user: User):
             detail="Completed orders cannot be cancelled"
         )
 
+    # Restore inventory for cancelled orders
     order_items = db_get_order_items(db, order.id)
 
     for oi in order_items:
         item = oi.item  # ORM relationship
 
+        # Reverse inventory changes based on order type
         if order.order_type == "sale":
-            db_apply_stock_change(db, item, oi.quantity)
+            db_apply_stock_change(db, item, oi.quantity)  # Add back
         elif order.order_type == "restock":
-            db_apply_stock_change(db, item, -oi.quantity)
+            db_apply_stock_change(db, item, -oi.quantity)  # Remove
 
     db_change_order_status(order, "cancelled")
 
@@ -180,11 +196,13 @@ def cancel_order(db: Session, order_id: int, current_user: User):
     )
 
 def complete_order(db: Session, order_id: int, current_user: User):
+    """Complete order and apply final inventory changes."""
     order = db_get_order_by_id(db, order_id)
 
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
+    # Validate company access
     assert_company_access(
         db=db,
         is_superadmin=False,
@@ -192,6 +210,7 @@ def complete_order(db: Session, order_id: int, current_user: User):
         company_id=order.company_id
     )
 
+    # Check order status
     if order.status == "cancelled":
         raise HTTPException(
             status_code=409,
@@ -204,11 +223,13 @@ def complete_order(db: Session, order_id: int, current_user: User):
             detail="Completed orders cannot be cancelled"
         )
 
+    # Apply inventory changes for restock orders
     order_items = db_get_order_items(db, order.id)
 
     for oi in order_items:
         item = oi.item
 
+        # Add inventory for restock orders (sales already applied at creation)
         if order.order_type == "restock":
             db_apply_stock_change(db, item, oi.quantity)
 
@@ -222,8 +243,10 @@ def count_orders_by_status(
     db: Session,
     current_user: User,
 ):
+    """Get order counts by status for analytics."""
     now = datetime.utcnow()
 
+    # Filter for last 7 days of sales orders
     filters = {
         "order_type": "sale",
         "from_ts": start_of_day(now - timedelta(days=7)),
@@ -237,8 +260,10 @@ def count_orders_by_status(
         filters=filters,
     )
 
+    # Initialize result with default counts
     result = {status: 0 for status in ("pending", "completed", "cancelled")}
 
+    # Populate with actual counts
     for status, count in rows:
         result[status] = count
 

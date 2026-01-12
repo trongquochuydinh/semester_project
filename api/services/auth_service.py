@@ -1,8 +1,12 @@
+# Import utilities
 from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+# Import configuration
 from api.config import GITHUB_CLIENT_ID, GITHUB_REDIRECT_URI
+
+# Import database operations
 from api.db.oauth_db import (
     create_oauth_account,
     get_oauth_account_by_provider_user_id,
@@ -14,13 +18,19 @@ from api.db.user_db import (
     get_user_data_by_id as db_get_user_data_by_id,
     get_oauth_providers,
 )
+
+# Import GitHub integration
 from api.integrations.github_client import (
     exchange_code_for_token,
     fetch_user,
 )
+
+# Import models and schemas
 from api.models.user import User
 from api.schemas import LoginResponse, MessageResponse
 from api.schemas.user_schema import OAuthInfo
+
+# Import utilities
 from api.utils import (
     create_access_token,
     verify_password,
@@ -37,18 +47,18 @@ from api.utils.auth_utils import consume_oauth_state, oauth_error_redirect
 # =====================================================
 
 def login_user_object(user: User, db: Session) -> LoginResponse:
-    """
-    Issue session + JWT + LoginResponse for an already authenticated user.
-    Used by password login and OAuth login.
-    """
+    """Create session and JWT for authenticated user."""
+    # Create login session
     session_id = establish_login_session(user)
 
+    # Generate JWT token
     token = create_access_token(
         user.id,
         user.role.name,
         session_id=session_id,
     )
 
+    # Get linked OAuth providers
     providers = get_oauth_providers(db, user.id)
 
     return LoginResponse(
@@ -69,6 +79,7 @@ def login_user_object(user: User, db: Session) -> LoginResponse:
 # =====================================================
 
 def login_user(identifier: str, password: str, db: Session) -> LoginResponse:
+    """Authenticate user with password and create session."""
     try:
         user = verify_user(identifier, password, db)
     except UserDisabledError:
@@ -83,13 +94,17 @@ def login_user(identifier: str, password: str, db: Session) -> LoginResponse:
 
 
 def verify_user(identifier: str, password: str, db: Session) -> User:
+    """Verify user credentials and status."""
+    # Find user by username or email
     user = db_get_user_by_identifier(db, identifier)
     if not user:
         raise InvalidCredentialsError()
 
+    # Verify password
     if not verify_password(password, user.password_hash):
         raise InvalidCredentialsError()
 
+    # Check account status
     if not user.is_active:
         raise UserDisabledError()
 
@@ -101,6 +116,7 @@ def verify_user(identifier: str, password: str, db: Session) -> User:
 # =====================================================
 
 def logout_user(current_user: User, db: Session) -> MessageResponse:
+    """Clear user session and set offline status."""
     clear_login_session(current_user)
     return MessageResponse(
         message="User logged out successfully"
@@ -112,9 +128,7 @@ def logout_user(current_user: User, db: Session) -> MessageResponse:
 # =====================================================
 
 def start_github_login() -> str:
-    """
-    Start GitHub OAuth flow for LOGIN (no session).
-    """
+    """Generate GitHub OAuth URL for login flow."""
     state = create_oauth_state(user_id=None)
 
     return (
@@ -127,9 +141,7 @@ def start_github_login() -> str:
 
 
 def start_github_link(user_id: int) -> str:
-    """
-    Start GitHub OAuth flow for LINKING an existing user.
-    """
+    """Generate GitHub OAuth URL for account linking."""
     state = create_oauth_state(user_id)
 
     return (
@@ -146,27 +158,25 @@ def start_github_link(user_id: int) -> str:
 # =====================================================
 
 def handle_github_callback(code: str, state: str, db: Session) -> str:
-    """
-    Handle GitHub OAuth callback.
-    Returns redirect URL for the web_app.
-    """
+    """Handle GitHub OAuth callback for login or linking."""
+    # Validate state and get user ID if linking
     user_id: Optional[int] = consume_oauth_state(state)
 
+    # Exchange code for access token
     access_token = exchange_code_for_token(code)
     github_user = fetch_user(access_token)
 
     github_id = str(github_user["id"])
     github_email = str(github_user.get("email"))
 
+    # Check if GitHub account already linked
     oauth_account = get_oauth_account_by_provider_user_id(
         db,
         provider="github",
         provider_user_id=github_id,
     )
 
-    # -------------------------
-    # LOGIN FLOW
-    # -------------------------
+    # Handle login flow (no user_id in state)
     if user_id is None:
         if not oauth_account:
             return oauth_error_redirect(
@@ -191,12 +201,11 @@ def handle_github_callback(code: str, state: str, db: Session) -> str:
             f"?token={login_response.access_token}"
         )
 
-    # -------------------------
-    # LINK FLOW
-    # -------------------------
+    # Handle linking flow (user_id in state)
     if oauth_account:
         return oauth_error_redirect("GitHub account already linked")
 
+    # Create OAuth account link
     create_oauth_account(
         db,
         user_id=user_id,

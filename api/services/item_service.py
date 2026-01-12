@@ -25,16 +25,20 @@ from api.services import (
 from api.utils import validate_item_data
 
 def create_item(data: ItemCreationRequest, db: Session, current_user: User) -> MessageResponse:
+    """Create new item with auto-generated SKU."""
+    # Validate input data
     name, price, quantity = validate_item_data(data)
 
+    # Generate unique SKU from item name
     sku = generate_sku(name)
 
+    # Create item object
     item = Item(
         name=name,
         sku=sku,
         price=price,
         quantity=quantity,
-        company_id=current_user.company_id,
+        company_id=current_user.company_id,  # Multi-tenant assignment
         is_active=True,
     )
 
@@ -45,11 +49,13 @@ def create_item(data: ItemCreationRequest, db: Session, current_user: User) -> M
     )
 
 def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: User) -> ItemEditResponse:
+    """Update existing item with authorization checks."""
     item = db_get_item_data_by_id(db, item_id)
 
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
+    # Validate company access
     assert_company_access(
         db,
         is_superadmin=(current_user.role.name == "superadmin"),
@@ -57,8 +63,10 @@ def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: Us
         company_id=item.company_id,
     )
 
+    # Validate input data
     name, price, quantity = validate_item_data(data)
 
+    # Build update data
     updates = {
         "name": name,
         "price": price,
@@ -81,11 +89,13 @@ def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: Us
     )
 
 def get_item(item_id: int, db: Session, current_user: User):
+    """Get item details with authorization checks."""
     item = db_get_item_data_by_id(db, item_id)
 
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
+    # Validate company access
     assert_company_access(
         db,
         is_superadmin=(current_user.role.name == "superadmin"),
@@ -100,11 +110,13 @@ def get_item(item_id: int, db: Session, current_user: User):
     )
 
 def toggle_item_is_active(item_id: int, db: Session, current_user: User) -> MessageResponse:
+    """Enable/disable item with authorization checks."""
     item = db_get_item_data_by_id(db, item_id)
 
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
+    # Validate company access
     assert_company_access(
         db,
         is_superadmin=(current_user.role.name == "superadmin"),
@@ -113,7 +125,6 @@ def toggle_item_is_active(item_id: int, db: Session, current_user: User) -> Mess
     )
 
     is_active = not item.is_active
-
     db_change_item_is_active(item, is_active)
 
     return MessageResponse(
@@ -121,8 +132,12 @@ def toggle_item_is_active(item_id: int, db: Session, current_user: User) -> Mess
     )
 
 def generate_sku(name: str) -> str:
+    """Generate SKU from item name with random suffix."""
+    # Extract alphanumeric characters and take first 8
     base = re.sub(r"[^A-Z0-9]", "", name.upper())
     base = base[:8] if base else "ITEM"
+    
+    # Add random suffix for uniqueness
     return f"{base}-{uuid4().hex[:6].upper()}"
 
 def paginate_items(
@@ -132,7 +147,7 @@ def paginate_items(
     filters: dict,
     company_id: int,
 ):
-    
+    """Get paginated item list with company scoping."""
     total, results = db_paginate_items(
         db=db,
         filters=filters,
@@ -142,6 +157,7 @@ def paginate_items(
     )
 
     def serialize(i):
+        """Convert item to dict with formatted status."""
         d = {c.name: getattr(i, c.name) for c in i.__table__.columns}
         d["company_name"] = i.company.name if i.company else None
         d["is_active"] = "Active" if i.is_active else "Discontinued"

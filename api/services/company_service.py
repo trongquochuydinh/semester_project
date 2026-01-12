@@ -18,9 +18,10 @@ from api.db.company_db import (
 from api.utils import normalize_string, validate_company_data
 
 def create_company(data: CompanyCreateRequest, db: Session) -> MessageResponse:
-
+    """Create new company with uniqueness validation."""
     validate_company_data(data)
 
+    # Check for duplicate company name
     existing = db_company_exists_by_name(db, data.name.strip().lower())
     if existing:
         raise HTTPException(
@@ -28,6 +29,7 @@ def create_company(data: CompanyCreateRequest, db: Session) -> MessageResponse:
             detail="Company with this name already exists"
         )
 
+    # Create company object
     company = Company(
         name=data.name,
         field=data.field
@@ -40,11 +42,14 @@ def create_company(data: CompanyCreateRequest, db: Session) -> MessageResponse:
     )
 
 def edit_company(company_id: int, db: Session, data: CompanyEditRequest) -> MessageResponse:
+    """Update company with uniqueness validation."""
     validate_company_data(data)
+    
     company = db_get_company_data_by_id(db, company_id)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
 
+    # Check for name conflicts excluding current company
     if db_company_exists_by_name_excluding_id(
         db=db,
         name=normalize_string(data.name.lower(), "name"),
@@ -55,6 +60,7 @@ def edit_company(company_id: int, db: Session, data: CompanyEditRequest) -> Mess
             detail="Company with this name already exists"
         )
 
+    # Build update data
     updates = {
         "name": data.name.strip(),
         "field": data.field,
@@ -71,6 +77,7 @@ def edit_company(company_id: int, db: Session, data: CompanyEditRequest) -> Mess
     )
 
 def delete_company(company_id: int, db: Session) -> MessageResponse:
+    """Delete company and all related data."""
     company = db_get_company_data_by_id(db, company_id)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
@@ -82,6 +89,7 @@ def delete_company(company_id: int, db: Session) -> MessageResponse:
     )
 
 def get_info_of_company(company_id, db):
+    """Get company details by ID."""
     company = db_get_company_data_by_id(db, company_id)
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
@@ -94,6 +102,7 @@ def get_info_of_company(company_id, db):
     return company_dict
 
 def list_companies(db: Session, current_user: User):
+    """Get companies based on user permissions."""
     companies = db_list_companies(
         db=db,
         is_superadmin=current_user.role.name == "superadmin",
@@ -113,8 +122,9 @@ def assert_user_company_scope(
     current_user_company_id: int,
     target_company_id: int,
 ):
+    """Validate user can access target company."""
     if is_superadmin:
-        return
+        return  # Superadmins have global access
 
     if current_user_company_id != target_company_id:
         raise HTTPException(
@@ -129,6 +139,7 @@ def assert_company_access(
     current_user_company_id: int,
     company_id: Optional[int],
 ) -> Company:
+    """Validate and return company with access control."""
     company = db_get_company_data_by_id(db, company_id)
 
     if not company:
@@ -137,6 +148,7 @@ def assert_company_access(
             detail="Company not found",
         )
 
+    # Check if user can access this company
     assert_user_company_scope(
         is_superadmin=is_superadmin,
         current_user_company_id=current_user_company_id,
@@ -151,8 +163,10 @@ def paginate_companies(
     offset: int,
     filters: dict
 ):
+    """Get paginated company list with filtering."""
     query = db.query(Company)
 
+    # Apply filters
     for key, value in filters.items():
         if hasattr(Company, key):
             query = query.filter(getattr(Company, key) == value)
@@ -161,6 +175,7 @@ def paginate_companies(
     results = query.offset(offset).limit(limit).all()
 
     def to_dict(obj):
+        """Convert company to dictionary."""
         return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
 
     data = [to_dict(r) for r in results]
