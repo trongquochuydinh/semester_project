@@ -24,6 +24,7 @@ services:
       dockerfile: api/Dockerfile
     container_name: api
     environment:
+      - APP_ENV=${APP_ENV:-development}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -43,6 +44,7 @@ services:
       dockerfile: web_app/Dockerfile
     container_name: web_app
     environment:
+      - APP_ENV=${APP_ENV:-development}
       - API_URL=http://api:8500
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
     ports:

@@ -28,7 +28,7 @@ from api.integrations.github_client import (
 # Import models and schemas
 from api.models.user import User
 from api.schemas import LoginResponse, MessageResponse
-from api.schemas.user_schema import OAuthInfo
+from api.schemas.auth_schema import OAuthInfo
 
 # Import utilities
 from api.utils import (
@@ -39,7 +39,12 @@ from api.utils import (
     InvalidCredentialsError,
     UserDisabledError,
 )
-from api.utils.auth_utils import consume_oauth_state, oauth_error_redirect
+from api.utils.auth_utils import (
+    consume_oauth_exchange_code,
+    consume_oauth_state,
+    create_oauth_exchange_code,
+    oauth_error_redirect,
+)
 
 
 # =====================================================
@@ -196,9 +201,10 @@ def handle_github_callback(code: str, state: str, db: Session) -> str:
                 "User is already logged in elsewhere"
             )
 
+        exchange_code = create_oauth_exchange_code(login_response.model_dump())
         return (
             "http://localhost:8000/auth/oauth-success"
-            f"?token={login_response.access_token}"
+            f"?code={exchange_code}"
         )
 
     # Handle linking flow (user_id in state)
@@ -215,3 +221,10 @@ def handle_github_callback(code: str, state: str, db: Session) -> str:
     )
 
     return "http://localhost:8000/auth/oauth-linked"
+
+
+def exchange_oauth_code(code: str) -> LoginResponse:
+    login_payload = consume_oauth_exchange_code(code)
+    if not login_payload:
+        raise HTTPException(400, "Invalid or expired OAuth code")
+    return LoginResponse(**login_payload)

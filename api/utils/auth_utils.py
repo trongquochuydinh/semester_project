@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash
 
 # Import configuration and schemas
 from api.config import JWT_SECRET
-from api.schemas.user_schema import OAuthStateData
+from api.schemas.auth_schema import OAuthStateData
 from api.utils.exception_utils import TokenExpiredError, InvalidTokenError
 
 # JWT configuration constants
@@ -191,6 +191,27 @@ def consume_oauth_state(state: str) -> Optional[int]:
         return None  # State expired
 
     return data["user_id"]
+
+_OAUTH_CODE_STORE: Dict[str, dict] = {}
+_OAUTH_CODE_TTL = timedelta(minutes=2)
+
+
+def create_oauth_exchange_code(login_payload: dict) -> str:
+    code = secrets.token_urlsafe(32)
+    _OAUTH_CODE_STORE[code] = {
+        "login_payload": login_payload,
+        "expires_at": datetime.utcnow() + _OAUTH_CODE_TTL,
+    }
+    return code
+
+
+def consume_oauth_exchange_code(code: str) -> Optional[dict]:
+    data = _OAUTH_CODE_STORE.pop(code, None)
+    if not data:
+        return None
+    if data["expires_at"] < datetime.utcnow():
+        return None
+    return data["login_payload"]
 
 def oauth_error_redirect(message: str) -> str:
     """
