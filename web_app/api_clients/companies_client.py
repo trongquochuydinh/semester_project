@@ -1,7 +1,7 @@
 # Import Flask JSON utilities for response formatting
 from flask import jsonify
 # Import API communication utilities and error handling
-from web_app.api_clients.utils import api_get, api_post, APIClientError
+from web_app.api_clients.utils import api_delete, api_get, api_post, api_put, APIClientError
 
 # --- Company Data Retrieval Functions ---
 
@@ -17,7 +17,7 @@ def get_companies():
     Used for: Dropdown lists, selection interfaces, company overviews
     """
     try:
-        res = api_get("/api/companies/get_companies")
+        res = api_get("/api/companies")
         # Return raw response data for client processing
         return (res.text, res.status_code, res.headers.items())
     except APIClientError as e:
@@ -36,7 +36,7 @@ def get_company(company_id):
         OR jsonify: Error response if company not found or access denied
     """
     try:
-        res = api_get(f"/api/companies/get/{company_id}")
+        res = api_get(f"/api/companies/{company_id}")
         return (res.text, res.status_code, res.headers.items())
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
@@ -57,7 +57,7 @@ def paginate_company(data):
         
     Used for: Large company lists in management interfaces
     """
-    res = api_post("/api/companies/paginate", data)
+    res = api_post("/api/companies/search", data)
     return (res.text, res.status_code, res.headers.items())
 
 # --- Company Management Functions ---
@@ -79,7 +79,7 @@ def create_company(data):
         OR jsonify: Error response if validation fails or creation error
     """
     try:
-        res = api_post("/api/companies/create", data)
+        res = api_post("/api/companies", data)
         return (res.text, res.status_code, res.headers.items())
     except APIClientError as e:
         return jsonify({"error": e.message}), e.status_code
@@ -99,7 +99,7 @@ def edit_company(company_id: int, data):
     Note: Returns formatted JSON response instead of raw API response
     """
     try:
-        res = api_post(f"/api/companies/edit/{company_id}", data)
+        res = api_put(f"/api/companies/{company_id}", data)
         resp_json = res.json()
         return jsonify({
             "success": True,
@@ -123,7 +123,7 @@ def delete_company(company_id):
     Ensure proper authorization and cascade handling in backend.
     """
     try:
-        res = api_post(f"/api/companies/delete/{company_id}")
+        res = api_delete(f"/api/companies/{company_id}")
         resp_json = res.json()
         return jsonify({
             "success": True,

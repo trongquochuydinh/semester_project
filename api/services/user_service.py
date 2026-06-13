@@ -1,178 +1,195 @@
-from fastapi import HTTPException
-from werkzeug.security import generate_password_hash
-from typing import Dict, Any
-
-from api.db.user_db import (
-    insert_user,
-    paginate_users as db_paginate_users,
-    count_users as db_count_users,
-    get_user_data_by_id as db_get_user_data_by_id,
-    edit_user as db_edit_user,
-    change_user_is_active as db_change_user_is_active,
-    user_exists_by_username_or_email as db_user_exists_by_username_or_email,
-    get_oauth_providers as db_get_oauth_providers
-)
-
-from api.schemas.user_schema import LoginResponse, OAuthInfo
-from api.services.company_service import assert_company_access
-from api.services.role_service import resolve_assignable_role, get_subroles_for_role
+from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
+from werkzeug.security import generate_password_hash
+
+from api.db.user_db import (
+    change_user_is_active as db_change_user_is_active,
+    count_users as db_count_users,
+    edit_user as db_edit_user,
+    get_oauth_providers as db_get_oauth_providers,
+    get_user_data_by_id as db_get_user_data_by_id,
+    insert_user,
+    paginate_users as db_paginate_users,
+    user_exists_by_username_or_email as db_user_exists_by_username_or_email,
+)
+from api.domain import ConflictError, MessageResult, NotFoundError
+from api.domain.access import RolePolicy
+from api.domain.mappers.user_mapper import (
+    create_user_result_to_response,
+    current_user_profile_to_dict,
+    user_profile_to_edit_response,
+    user_profile_to_get_response,
+    user_stats_to_response,
+)
+from api.domain.user import (
+    CreateUserResult,
+    CurrentUserProfile,
+    PaginatedUsers,
+    UserDraft,
+    UserProfile,
+    UserStats,
+)
 from api.models.user import User
-from api.utils import generate_password, validate_user_data
-from api.schemas import UserCreateResponse, UserCreateRequest, UserCountResponse, UserGetResponse, UserEditResponse, PaginationResponse, MessageResponse, UserEditRequest
+from api.services.company_service import assert_company_access
+from api.services.role_service import get_subroles_for_role, resolve_assignable_role
+from api.utils import generate_password
 
-def create_user_account(data: UserCreateRequest, db: Session, current_user: User) -> UserCreateResponse:
-    """Create new user with validation and authorization checks."""
-    # Validate input data format and constraints
-    validate_user_data(data)
 
-    # Normalize user input
-    username = data.username.strip()
-    email = data.email.strip().lower()
+def _is_superadmin(user: User) -> bool:
+    return user.role.name == "superadmin"
 
-    # Check for duplicate username/email
-    if db_user_exists_by_username_or_email(
-        db,
-        username=username,
-        email=email,
-        exclude_user_id=None
-    ):
-        raise HTTPException(
-            status_code=409,
-            detail="Username or email already exists",
-        )
 
-    # Validate company access for multi-tenant security
-    company = assert_company_access(
-        db,
-        is_superadmin=(current_user.role.name == "superadmin"),
-        current_user_company_id=current_user.company_id,
-        company_id=data.company_id,
+def create_user_account(
+    db: Session,
+    current_user: User,
+    username: str,
+    email: str,
+    role: str,
+    company_id: int,
+):
+    RolePolicy.require(
+        current_user.role.name,
+        ["superadmin", "admin", "manager"],
     )
 
-    # Validate role assignment permissions
-    role = resolve_assignable_role(
+    draft = UserDraft.from_raw(username, email, company_id, role)
+
+    if db_user_exists_by_username_or_email(
+        db,
+        username=draft.username.value,
+        email=draft.email.value,
+        exclude_user_id=None,
+    ):
+        raise ConflictError("Username or email already exists")
+
+    company = assert_company_access(
+        db,
+        is_superadmin=_is_superadmin(current_user),
+        current_user_company_id=current_user.company_id,
+        company_id=draft.company_id,
+    )
+
+    role_entity = resolve_assignable_role(
         db=db,
-        role_name=data.role,
+        role_name=draft.role_name,
         current_user=current_user,
     )
 
-    # Create user with generated password
-    user_initial_password = generate_password()
-    password_hash = generate_password_hash(user_initial_password)
-
+    initial_password = generate_password()
     user = User(
-        username=username,
-        email=email,
+        username=draft.username.value,
+        email=draft.email.value,
         company_id=company.id,
-        role_id=role.id,
-        password_hash=password_hash,
+        role_id=role_entity.id,
+        password_hash=generate_password_hash(initial_password),
         status="offline",
     )
-
     insert_user(db, user)
 
-    return UserCreateResponse(
+    result = CreateUserResult(
         message="User created successfully",
-        initial_password=user_initial_password,
+        initial_password=initial_password,
     )
+    return create_user_result_to_response(result)
+
 
 def edit_user(
-    user_id: int,
-    data: UserEditRequest,
     db: Session,
     current_user: User,
+    user_id: int,
+    username: str,
+    email: str,
+    role: str,
+    company_id: int,
 ):
-    """Update existing user with authorization and validation."""
-    # Validate input data
-    validate_user_data(data)
+    RolePolicy.require(
+        current_user.role.name,
+        ["superadmin", "admin", "manager"],
+    )
 
-    username = data.username.strip()
-    email = data.email.strip().lower()
+    draft = UserDraft.from_raw(username, email, company_id, role)
 
-    # Check for conflicts excluding current user
     if db_user_exists_by_username_or_email(
         db,
-        username=username,
-        email=email,
+        username=draft.username.value,
+        email=draft.email.value,
         exclude_user_id=user_id,
     ):
-        raise HTTPException(
-            status_code=409,
-            detail="Username or email already exists",
-        )
+        raise ConflictError("Username or email already exists")
 
-    # Get user to edit
     user = db_get_user_data_by_id(db, user_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise NotFoundError("User not found")
 
-    is_superadmin = current_user.role.name == "superadmin"
+    is_superadmin = _is_superadmin(current_user)
 
-    # Validate company access
     assert_company_access(
         db,
         is_superadmin=is_superadmin,
         current_user_company_id=current_user.company_id,
-        company_id=data.company_id,
+        company_id=draft.company_id,
     )
 
-    # Validate role assignment
-    role = resolve_assignable_role(
+    role_entity = resolve_assignable_role(
         db=db,
-        role_name=data.role,
+        role_name=draft.role_name,
         current_user=current_user,
     )
 
-    # Prevent self role changes (unless superadmin)
-    if user.id == current_user.id and not is_superadmin:
-        if role.id != user.role_id:
-            raise HTTPException(
-                status_code=403,
-                detail="You cannot change your own role",
-            )
+    RolePolicy.enforce_self_role_change(
+        actor_id=current_user.id,
+        target_user_id=user.id,
+        is_superadmin=is_superadmin,
+        current_role_id=user.role_id,
+        new_role_id=role_entity.id,
+    )
 
-    # Build update data
     updates: Dict[str, Any] = {
-        "username": username,
-        "email": email,
+        "username": draft.username.value,
+        "email": draft.email.value,
     }
-
-    # Superadmins can change company
     if is_superadmin:
-        updates["company_id"] = data.company_id
+        updates["company_id"] = draft.company_id
 
     updated_user = db_edit_user(
         db=db,
         user=user,
         updates=updates,
-        role_id=role.id,
+        role_id=role_entity.id,
     )
 
-    return UserEditResponse(
+    profile = UserProfile(
         username=updated_user.username,
         email=updated_user.email,
         company_id=updated_user.company_id,
         role=updated_user.role.name,
     )
+    return user_profile_to_edit_response(profile)
 
-def toggle_user_is_active(user_id: int, db: Session, current_user: User) -> MessageResponse:
-    """Enable/disable user account with authorization checks."""
+
+def toggle_user_is_active(
+    db: Session,
+    current_user: User,
+    user_id: int,
+) -> MessageResult:
+    RolePolicy.require(
+        current_user.role.name,
+        ["superadmin", "admin", "manager"],
+    )
+
     user = db_get_user_data_by_id(db, user_id)
     if not user:
-        raise HTTPException(404, "User not found")
-    
-    # Validate company access
+        raise NotFoundError("User not found")
+
     assert_company_access(
         db,
-        is_superadmin=(current_user.role.name == "superadmin"),
+        is_superadmin=_is_superadmin(current_user),
         current_user_company_id=current_user.company_id,
         company_id=user.company_id,
     )
 
-    # Validate role permissions
-    role = resolve_assignable_role(
+    resolve_assignable_role(
         db=db,
         role_name=user.role.name,
         current_user=current_user,
@@ -181,69 +198,67 @@ def toggle_user_is_active(user_id: int, db: Session, current_user: User) -> Mess
     is_active = not user.is_active
     db_change_user_is_active(db, user, is_active)
 
-    return MessageResponse(
+    return MessageResult(
         message=f"User was successfully {'enabled' if is_active else 'disabled'}."
     )
 
+
 def get_current_user_info(db: Session, current_user: User):
-    """Get current user profile with OAuth provider info."""
     user = db_get_user_data_by_id(db, current_user.id)
-
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise NotFoundError("User not found")
 
-    # Get linked OAuth providers
     providers = db_get_oauth_providers(db, current_user.id)
+    profile = CurrentUserProfile(
+        id=user.id,
+        username=user.username,
+        role=user.role.name,
+        company_id=user.company_id,
+        oauth_github="github" in providers,
+    )
+    return current_user_profile_to_dict(profile)
 
-    return {
-        "id": user.id,
-        "username": user.username,
-        "role": user.role.name,
-        "company_id": user.company_id,
-        "oauth_info": OAuthInfo(
-            github="github" in providers
-        ),
-    }
 
-def get_info_of_user(user_id: int, db: Session, current_user: User) -> UserGetResponse:
-    """Get user details with authorization checks."""
+def get_info_of_user(db: Session, current_user: User, user_id: int):
+    RolePolicy.require(
+        current_user.role.name,
+        ["superadmin", "admin", "manager"],
+    )
+
     user = db_get_user_data_by_id(db, user_id)
-
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise NotFoundError("User not found")
 
-    # Validate company access
     assert_company_access(
         db,
-        is_superadmin=(current_user.role.name == "superadmin"),
+        is_superadmin=_is_superadmin(current_user),
         current_user_company_id=current_user.company_id,
         company_id=user.company_id,
     )
 
-    return UserGetResponse(
+    profile = UserProfile(
         username=user.username,
         email=user.email,
         company_id=user.company_id,
         role=user.role.name,
     )
+    return user_profile_to_get_response(profile)
+
 
 def paginate_users(
     db: Session,
+    current_user: User,
     limit: int,
     offset: int,
     filters: dict,
-    user_role: str,
-    company_id: int,
-):
-    """Get paginated user list with role-based filtering."""
-    # Apply role-based access control
+) -> PaginatedUsers:
     if "status" in filters:
-        allowed_roles = None  # Show all roles for status filtering
+        allowed_roles = None
     else:
         roles = get_subroles_for_role(
             db,
-            user_role,
-            excluded_roles=[user_role],
+            current_user.role.name,
+            excluded_roles=[current_user.role.name],
         )
         allowed_roles = {role.name for role in roles}
 
@@ -251,34 +266,28 @@ def paginate_users(
         db,
         filters,
         allowed_roles,
-        company_id,
+        current_user.company_id,
         limit,
         offset,
     )
 
-    def serialize(u: User):
-        """Convert user to dict with role and company info."""
-        d = {c.name: getattr(u, c.name) for c in u.__table__.columns}
-        d.pop("password_hash", None)  # Never expose password hash
-        d["role_name"] = u.role.name if u.role else None
-        d["company_name"] = u.company.name if u.company else None
-        return d
+    data = []
+    for user in results:
+        row = {c.name: getattr(user, c.name) for c in user.__table__.columns}
+        row.pop("password_hash", None)
+        row["role_name"] = user.role.name if user.role else None
+        row["company_name"] = user.company.name if user.company else None
+        data.append(row)
 
-    return PaginationResponse(
-        total=total,
-        data=[serialize(r) for r in results],
-    )
+    return PaginatedUsers(total=total, data=data)
 
-def get_user_count(db: Session, current_user: User) -> UserCountResponse:
-    """Get user statistics scoped by permissions."""
-    is_superadmin = current_user.role.name == "superadmin"
+
+def get_user_count(db: Session, current_user: User):
+    is_superadmin = _is_superadmin(current_user)
     company_id = None if is_superadmin else current_user.company_id
 
-    total = db_count_users(db, company_id=company_id)
-    online = db_count_users(db, company_id=company_id, online_only=True)
-
-    return UserCountResponse(
-        total_users=total,
-        online_users=online,
+    stats = UserStats(
+        total_users=db_count_users(db, company_id=company_id),
+        online_users=db_count_users(db, company_id=company_id, online_only=True),
     )
-
+    return user_stats_to_response(stats)

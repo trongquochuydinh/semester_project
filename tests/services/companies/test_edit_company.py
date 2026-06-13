@@ -1,21 +1,16 @@
 import pytest
-from fastapi import HTTPException
 
+from api.domain import ConflictError, NotFoundError, ValidationError
 from api.services.company_service import edit_company
 from api.models import Company
-from api.schemas import CompanyEditRequest
 
-def test_edit_company_success(db, company):
-
-    data = CompanyEditRequest(
-        name="Updated Company",
-        field="New field"
-    )
-
+def test_edit_company_success(db, superadmin, company):
     response = edit_company(
-        company_id=company.id,
         db=db,
-        data=data,
+        current_user=superadmin,
+        company_id=company.id,
+        name="Updated Company",
+        field="New field",
     )
 
     db.refresh(company)
@@ -24,43 +19,36 @@ def test_edit_company_success(db, company):
     assert company.name == "Updated Company"
     assert company.field == "New field"
 
-def test_edit_company_not_found(db):
-    with pytest.raises(HTTPException) as exc:
+def test_edit_company_not_found(db, superadmin):
+    with pytest.raises(NotFoundError):
         edit_company(
-            company_id=9999,
             db=db,
-            data = CompanyEditRequest(
-                name="X",
-                field="Y"
-            )
+            current_user=superadmin,
+            company_id=9999,
+            name="X",
+            field="Y",
         )
 
-    assert exc.value.status_code == 404
-
-def test_edit_company_duplicate_name(db, company):
+def test_edit_company_duplicate_name(db, superadmin, company):
     other = Company(name="OtherCo", field="X")
     db.add(other)
     db.flush()
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(ConflictError):
         edit_company(
-            company_id=company.id,
             db=db,
-            data = CompanyEditRequest(
-                name="OtherCo",
-                field="X"
-            )
+            current_user=superadmin,
+            company_id=company.id,
+            name="OtherCo",
+            field="X",
         )
 
-    assert exc.value.status_code == 409
-
-def test_edit_company_empty_fields(db, company):
-    data = CompanyEditRequest(
+def test_edit_company_empty_fields(db, superadmin, company):
+    with pytest.raises(ValidationError):
+        edit_company(
+            db=db,
+            current_user=superadmin,
+            company_id=company.id,
             name="",
-            field="X"
+            field="X",
         )
-
-    with pytest.raises(HTTPException) as exc:
-        edit_company(company_id=company.id, data=data, db=db)
-
-    assert exc.value.status_code == 422

@@ -84,28 +84,6 @@ def validate_user_data(data: UserWriter):
     if not is_valid_email(email):
         raise HTTPException(422, "Invalid email format")
 
-def validate_company_data(data):
-    """
-    Validate company creation/edit data.
-    
-    Ensures company name and business field are properly specified
-    for multi-tenant organization setup.
-    
-    Args:
-        data: Company data from request
-        
-    Raises:
-        HTTPException: For missing or invalid company information
-    """
-    name = normalize_string(data.name, "Company name")
-    field = normalize_string(data.field, "Field")
-
-    if not name:
-        raise HTTPException(422, "Company name is required")
-    
-    if not field:
-        raise HTTPException(422, "Field is required")
-
 def is_valid_email(email: str) -> bool:
     """
     Validate email format using standard parsing.

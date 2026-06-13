@@ -1,18 +1,19 @@
-from fastapi import HTTPException
 import pytest
 
-from api.services.order_service import create_order, complete_order
+from api.domain import ConflictError
+from api.services.order_service import complete_order, create_order
 from api.models import Order
+
 
 def test_complete_restock_order_increases_stock(db, employee, item):
     initial_qty = item.quantity
 
-    data = type("obj", (), {
-        "order_type": "restock",
-        "items": [{"item_id": item.id, "quantity": 3}],
-    })()
-
-    create_order(db, data, employee)
+    create_order(
+        db=db,
+        current_user=employee,
+        order_type="restock",
+        items=[{"item_id": item.id, "quantity": 3}],
+    )
 
     order = db.query(Order).order_by(Order.id.desc()).first()
 
@@ -26,10 +27,9 @@ def test_complete_restock_order_increases_stock(db, employee, item):
     assert order.status == "completed"
     assert item.quantity == initial_qty + 3
 
-def test_cancel_order_twice(db, order, employee):
+
+def test_complete_order_twice(db, order, employee):
     complete_order(db, order.id, employee)
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(ConflictError):
         complete_order(db, order.id, employee)
-
-    assert exc.value.status_code == 409

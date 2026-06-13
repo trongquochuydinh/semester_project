@@ -108,13 +108,19 @@ DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=inventory_db
 
-
-FLASK_SECRET_KEY=f7b8a0de9c8043c6a21b7a8b53f7c4a0c3d2b19a91a05c98dfb0b02401eac83a
-JWT_SECRET=3DzaAtgSR5kkOrX_RrfqioNj2PeS6y2WFxxdRf3W8uF0xoHKkZyWojHz9V42LT9w4FA1dpw8BR1QKGIM5OXMkQ
+APP_ENV=development
+FLASK_SECRET_KEY=change-me-for-local-dev
+JWT_SECRET=change-me-for-local-dev
 
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
-GITHUB_REDIRECT_URI=http://localhost:8500/api/users/auth/github/callback
+GITHUB_REDIRECT_URI=http://localhost:8500/api/auth/github/callback
+```
+
+Generate secure secrets for local development:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
 ### Installation & Run
@@ -137,7 +143,7 @@ To log into the app using a Github account, you must do these steps:
 4. Fill in the form:
     - Application Name: inventory_app (or similar).
     - Homepage URL: http://localhost:8000
-    - Authorization callback URL: http://localhost:8500/api/users/auth/github/callback
+    - Authorization callback URL: http://localhost:8500/api/auth/github/callback
 5. Click **Register application**.
 6. You will now see your **Client ID**.
 7. Click **Generate a new client secret** to get your **Client Secret**. **Copy both of these**.
@@ -145,7 +151,7 @@ To log into the app using a Github account, you must do these steps:
     ```bash
     GITHUB_CLIENT_ID=your_client_id
     GITHUB_CLIENT_SECRET=your_client_secret
-    GITHUB_REDIRECT_URI=http://localhost:8500/api/users/auth/github/callback
+    GITHUB_REDIRECT_URI=http://localhost:8500/api/auth/github/callback
     ```
 ---
 

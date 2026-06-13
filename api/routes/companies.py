@@ -1,200 +1,117 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from api.dependencies import require_role, get_db
-from api.models.user import User
-from api.schemas import(
-    CompanyCreateRequest,
-    CompanyEditRequest,
-    PaginationRequest
+from api.dependencies import get_current_user, get_db
+from api.domain.mappers.company_mapper import (
+    company_domain_to_detail_response,
+    company_domain_to_row,
+    company_list_to_response,
 )
-
+from api.models.user import User
+from api.schemas import (
+    CompaniesResponse,
+    CompanyCreateRequest,
+    CompanyDetailResponse,
+    CompanyEditRequest,
+    MessageResponse,
+    PaginationRequest,
+    PaginationResponse,
+)
 from api.services import (
-    create_company, 
-    get_info_of_company, 
-    edit_company,
+    create_company,
     delete_company,
+    edit_company,
+    get_info_of_company,
+    list_companies,
     paginate_companies,
-    list_companies
 )
 
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
-@router.get("/get_companies")
-def get_companies_endpoint(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["superadmin", "admin", "manager"]))
-):
-    """
-    Get list of companies accessible to current user.
-    
-    Returns companies based on user's role and permissions:
-    - Superadmins: See all companies in system
-    - Admins/Managers: See only their own company
-    
-    Args:
-        db: Database session for company queries
-        current_user: Authenticated user for permission scoping
-        
-    Returns:
-        list: Companies accessible to current user
-        
-    Used for: Company selection dropdowns, multi-tenant context switching,
-             admin dashboards showing company information
-    """
-    return list_companies(db, current_user)
 
-@router.get("/get/{company_id}")
-def get_company_endpoint(
-    company_id: int, 
+@router.get("", response_model=CompaniesResponse)
+def list_companies_endpoint(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["superadmin"]))
+    current_user: User = Depends(get_current_user),
 ):
-    """
-    Get detailed information for specific company.
-    
-    Returns complete company profile for viewing and editing.
-    Restricted to superadmins only for security.
-    
-    Args:
-        company_id: Unique identifier of company to retrieve
-        db: Database session for company lookup
-        current_user: Authenticated superadmin user
-        
-    Returns:
-        dict: Company details including name, field, and metadata
-        
-    Authorization: Superadmin only - prevents unauthorized company data access
-    Used for: Company detail pages, edit form pre-population, system administration
-    """
-    return get_info_of_company(company_id, db)
+    result = list_companies(db=db, current_user=current_user)
+    return company_list_to_response(result.companies)
 
-@router.post("/paginate")
+
+@router.post("/search", response_model=PaginationResponse)
 def paginate_companies_endpoint(
     data: PaginationRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["superadmin"])),
+    current_user: User = Depends(get_current_user),
 ):
-    """
-    Get paginated list of all companies with filtering and search.
-    
-    Provides comprehensive company listing for system administration
-    with support for filtering, sorting, and pagination.
-    
-    Args:
-        data: Pagination parameters (page, size, filters, sort)
-        db: Database session for company queries  
-        current_user: Authenticated superadmin user
-        
-    Returns:
-        PaginationResponse: Paginated company list with metadata
-        
-    Features:
-        - Search by company name
-        - Filter by business field/industry
-        - Sort by various company attributes
-        - Full system view for administrators
-        
-    Authorization: Superadmin only - prevents unauthorized system-wide access
-    Used for: Company management interfaces, system administration dashboards
-    """
-    return paginate_companies(
+    result = paginate_companies(
         db=db,
+        current_user=current_user,
         limit=data.limit,
         offset=data.offset,
-        filters=data.filters
+        filters=data.filters,
+    )
+    return PaginationResponse(
+        total=result.total,
+        data=[company_domain_to_row(company) for company in result.data],
     )
 
-# --- Company Management Endpoints (Superadmin Only) ---
 
-@router.post("/create")
-def create_company_endpoint(
-    data: CompanyCreateRequest, 
+@router.get("/{company_id}", response_model=CompanyDetailResponse)
+def get_company_endpoint(
+    company_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["superadmin"]))
+    current_user: User = Depends(get_current_user),
 ):
-    """
-    Create new company in the multi-tenant system.
-    
-    Establishes new tenant organization with unique name validation.
-    Only superadmins can create companies to maintain system integrity.
-    
-    Args:
-        data: Company creation data (name, field/industry)
-        db: Database session for company creation
-        current_user: Authenticated superadmin user
-        
-    Returns:
-        dict: Success message and created company information
-        
-    Validation:
-        - Company name must be unique across entire system
-        - Required fields validated through Pydantic schema
-        
-    Authorization: Superadmin only - prevents unauthorized tenant creation
-    Used for: System setup, new client onboarding, tenant provisioning
-    """
-    return create_company(data, db)
+    company = get_info_of_company(
+        db=db,
+        current_user=current_user,
+        company_id=company_id,
+    )
+    return company_domain_to_detail_response(company)
 
-@router.post("/edit/{company_id}")
+
+@router.post("", response_model=MessageResponse)
+def create_company_endpoint(
+    data: CompanyCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = create_company(
+        db=db,
+        current_user=current_user,
+        name=data.name,
+        field=data.field,
+    )
+    return MessageResponse(message=result.message)
+
+
+@router.put("/{company_id}", response_model=MessageResponse)
 def edit_company_endpoint(
-    company_id: int, 
+    company_id: int,
     data: CompanyEditRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["superadmin"]))
+    current_user: User = Depends(get_current_user),
 ):
-    """
-    Update existing company information.
-    
-    Allows modification of company details with validation for uniqueness
-    and business rules. Changes may affect all users within the company.
-    
-    Args:
-        company_id: ID of company to update
-        data: Updated company information
-        db: Database session for company updates
-        current_user: Authenticated superadmin user
-        
-    Returns:
-        dict: Update confirmation message
-        
-    Validation:
-        - Company name uniqueness (excluding current company)
-        - Field updates validated through schema
-        
-    Authorization: Superadmin only - prevents unauthorized tenant modification
-    Impact: May affect company display names throughout system
-    """
-    return edit_company(company_id, db, data)
+    result = edit_company(
+        db=db,
+        current_user=current_user,
+        company_id=company_id,
+        name=data.name,
+        field=data.field,
+    )
+    return MessageResponse(message=result.message)
 
-@router.post("/delete/{company_id}")
+
+@router.delete("/{company_id}", response_model=MessageResponse)
 def delete_company_endpoint(
-    company_id: int, 
+    company_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(["superadmin"]))
+    current_user: User = Depends(get_current_user),
 ):
-    """
-    Delete company and all associated data from system.
-    
-    Performs hard delete of company and cascades to all related data:
-    users, items, orders, and other company-scoped entities.
-    
-    Args:
-        company_id: ID of company to delete
-        db: Database session for deletion operations
-        current_user: Authenticated superadmin user
-        
-    Returns:
-        dict: Deletion confirmation message
-        
-    WARNING: This is a destructive operation that:
-        - Permanently deletes company and all related data
-        - Cannot be undone without database backups
-        - Affects all users, orders, and items in the company
-        
-    Authorization: Superadmin only - prevents accidental data loss
-    Used for: Tenant offboarding, system cleanup, contract terminations
-    
-    Consider: Implement soft delete in production for safety
-    """
-    return delete_company(company_id, db)
+    result = delete_company(
+        db=db,
+        current_user=current_user,
+        company_id=company_id,
+    )
+    return MessageResponse(message=result.message)

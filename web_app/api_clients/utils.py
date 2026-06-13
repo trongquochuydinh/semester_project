@@ -120,6 +120,20 @@ def api_post(endpoint, data=None):
     """
     return api_request("post", endpoint, data=data)
 
+def api_put(endpoint, data=None):
+    """Convenience wrapper for PUT requests to the backend API."""
+    return api_request("put", endpoint, data=data)
+
+
+def api_patch(endpoint, data=None):
+    """Convenience wrapper for PATCH requests to the backend API."""
+    return api_request("patch", endpoint, data=data)
+
+
+def api_delete(endpoint):
+    """Convenience wrapper for DELETE requests to the backend API."""
+    return api_request("delete", endpoint)
+
 # --- Authentication Decorators ---
 
 def login_required(view_func):

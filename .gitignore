@@ -1,8 +1,7 @@
-venv
-.vscode
-config.
-__py
-web_app/__pycache__
-*.pyc
+__pycache__/
+*.py[cod]
 .env
 .DS_Store
+venv/
+.vscode/
+.pytest_cache/

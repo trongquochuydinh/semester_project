@@ -2,6 +2,7 @@ import pytest
 
 from api.services.item_service import toggle_item_is_active
 
+
 def test_toggle_item_is_active(db, admin, item):
     assert item.is_active is True
 
@@ -20,9 +21,9 @@ def test_toggle_item_is_active(db, admin, item):
 
 def test_toggle_item_is_active_twice(db, admin, item):
     assert item.is_active is True
-    toggle_item_is_active(item.id, db, admin)
+    toggle_item_is_active(db=db, current_user=admin, item_id=item.id)
     assert item.is_active is False
-    toggle_item_is_active(item.id, db, admin)
+    toggle_item_is_active(db=db, current_user=admin, item_id=item.id)
 
     db.flush()
     db.refresh(item)
