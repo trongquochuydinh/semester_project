@@ -2,7 +2,7 @@ def test_admin_can_create_user(auth_client_factory, admin, company, role_employe
     client = auth_client_factory(admin)
 
     response = client.post(
-        "/api/users/create",
+        "/api/users",
         json={
             "username": "new_user",
             "email": "new_user@example.com",
@@ -17,11 +17,12 @@ def test_admin_can_create_user(auth_client_factory, admin, company, role_employe
     assert body["message"] == "User created successfully"
     assert "initial_password" in body
 
+
 def test_employee_cant_create_user(auth_client_factory, employee, company, role_employee):
     client = auth_client_factory(employee)
 
     response = client.post(
-        "/api/users/create",
+        "/api/users",
         json={
             "username": "new_user",
             "email": "new_user@example.com",
