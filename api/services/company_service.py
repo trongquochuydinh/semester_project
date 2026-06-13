@@ -1,10 +1,19 @@
-from typing import Optional
-from fastapi import HTTPException
+from typing import List, Optional
 from sqlalchemy.orm import Session
 
-from api.schemas import CompaniesResponse, CompanyOut, MessageResponse, CompanyCreateRequest, CompanyEditRequest
-
-from api.models import User, Company
+from api.domain import (
+    Company as DomainCompany,
+    CompanyList,
+    MessageResult,
+    NotFoundError,
+    PaginatedCompanies,
+)
+from api.domain.access import RolePolicy, TenantScope
+from api.domain.mappers.company_mapper import (
+    company_domain_to_entity,
+    company_entity_to_domain,
+)
+from api.models import User, Company as CompanyEntity
 from api.db.company_db import (
     get_company_data_by_id as db_get_company_data_by_id,
     create_company as db_create_company,
@@ -12,109 +21,90 @@ from api.db.company_db import (
     company_exists_by_name_excluding_id as db_company_exists_by_name_excluding_id,
     delete_company as db_delete_company,
     company_exists_by_name as db_company_exists_by_name,
-    list_companies as db_list_companies
+    list_companies as db_list_companies,
 )
 
-from api.utils import normalize_string, validate_company_data
 
-def create_company(data: CompanyCreateRequest, db: Session) -> MessageResponse:
-    """Create new company with uniqueness validation."""
-    validate_company_data(data)
+def create_company(db: Session, current_user: User, name: str, field: str) -> MessageResult:
+    RolePolicy.require(current_user.role.name, ["superadmin"])
 
-    # Check for duplicate company name
-    existing = db_company_exists_by_name(db, data.name.strip().lower())
-    if existing:
-        raise HTTPException(
-            status_code=409,
-            detail="Company with this name already exists"
-        )
-
-    # Create company object
-    company = Company(
-        name=data.name,
-        field=data.field
+    company = DomainCompany.draft(name, field)
+    company.ensure_unique_name(
+        company.name,
+        exists=lambda n: db_company_exists_by_name(db, n),
     )
 
-    db_create_company(db, company)
+    db_create_company(db, company_domain_to_entity(company))
 
-    return MessageResponse(
-        message="Company created successfully."
+    return MessageResult(message="Company created successfully.")
+
+
+def edit_company(
+    db: Session, current_user: User, company_id: int, name: str, field: str
+) -> MessageResult:
+    RolePolicy.require(current_user.role.name, ["superadmin"])
+
+    entity = db_get_company_data_by_id(db, company_id)
+    if not entity:
+        raise NotFoundError("Company not found")
+
+    company = company_entity_to_domain(entity).update(name, field)
+    company.ensure_unique_name(
+        company.name,
+        exists=lambda n: db_company_exists_by_name_excluding_id(
+            db=db,
+            name=n,
+            exclude_company_id=company_id,
+        ),
     )
-
-def edit_company(company_id: int, db: Session, data: CompanyEditRequest) -> MessageResponse:
-    """Update company with uniqueness validation."""
-    validate_company_data(data)
-    
-    company = db_get_company_data_by_id(db, company_id)
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-
-    # Check for name conflicts excluding current company
-    if db_company_exists_by_name_excluding_id(
-        db=db,
-        name=normalize_string(data.name.lower(), "name"),
-        exclude_company_id=company_id,
-    ):
-        raise HTTPException(
-            status_code=409,
-            detail="Company with this name already exists"
-        )
-
-    # Build update data
-    updates = {
-        "name": data.name.strip(),
-        "field": data.field,
-    }
 
     db_edit_company(
         db=db,
-        company=company,
-        updates=updates
+        company=entity,
+        updates={
+            "name": company.name.value,
+            "field": company.field.value,
+        },
     )
 
-    return MessageResponse(
-        message="Company was successfully updated."
-    )
+    return MessageResult(message="Company was successfully updated.")
 
-def delete_company(company_id: int, db: Session) -> MessageResponse:
-    """Delete company and all related data."""
+
+def delete_company(db: Session, current_user: User, company_id: int) -> MessageResult:
+    RolePolicy.require(current_user.role.name, ["superadmin"])
+
     company = db_get_company_data_by_id(db, company_id)
     if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    
+        raise NotFoundError("Company not found")
+
     db_delete_company(db, company)
 
-    return MessageResponse(
-        message="Company was successfully deleted."
-    )
+    return MessageResult(message="Company was successfully deleted.")
 
-def get_info_of_company(company_id, db):
-    """Get company details by ID."""
+
+def get_info_of_company(db: Session, current_user: User, company_id: int) -> DomainCompany:
+    RolePolicy.require(current_user.role.name, ["superadmin"])
+
     company = db_get_company_data_by_id(db, company_id)
     if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    
-    company_dict = {
-        "id" : company.id,
-        "company_name" : company.name,
-        "field" : company.field 
-    }
-    return company_dict
+        raise NotFoundError("Company not found")
 
-def list_companies(db: Session, current_user: User):
-    """Get companies based on user permissions."""
+    return company_entity_to_domain(company)
+
+
+def list_companies(db: Session, current_user: User) -> CompanyList:
+    RolePolicy.require(current_user.role.name, ["superadmin", "admin", "manager"])
+
     companies = db_list_companies(
         db=db,
         is_superadmin=current_user.role.name == "superadmin",
         user_company_id=current_user.company_id,
     )
 
-    return CompaniesResponse(
-        companies=[
-            CompanyOut(id=c.id, name=c.name)
-            for c in companies
-        ]
+    return CompanyList(
+        companies=[company_entity_to_domain(company) for company in companies]
     )
+
 
 def assert_user_company_scope(
     *,
@@ -122,15 +112,12 @@ def assert_user_company_scope(
     current_user_company_id: int,
     target_company_id: int,
 ):
-    """Validate user can access target company."""
-    if is_superadmin:
-        return  # Superadmins have global access
+    TenantScope.enforce(
+        is_superadmin=is_superadmin,
+        current_user_company_id=current_user_company_id,
+        target_company_id=target_company_id,
+    )
 
-    if current_user_company_id != target_company_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Operation not allowed outside your company",
-        )
 
 def assert_company_access(
     db: Session,
@@ -138,45 +125,40 @@ def assert_company_access(
     is_superadmin: bool,
     current_user_company_id: int,
     company_id: Optional[int],
-) -> Company:
-    """Validate and return company with access control."""
+) -> DomainCompany:
     company = db_get_company_data_by_id(db, company_id)
 
     if not company:
-        raise HTTPException(
-            status_code=404,
-            detail="Company not found",
-        )
+        raise NotFoundError("Company not found")
 
-    # Check if user can access this company
-    assert_user_company_scope(
+    TenantScope.enforce(
         is_superadmin=is_superadmin,
         current_user_company_id=current_user_company_id,
         target_company_id=company.id,
     )
 
-    return company
+    return company_entity_to_domain(company)
+
 
 def paginate_companies(
     db: Session,
+    current_user: User,
     limit: int,
     offset: int,
-    filters: dict
-):
-    """Get paginated company list with filtering."""
-    query = db.query(Company)
+    filters: dict,
+) -> PaginatedCompanies:
+    RolePolicy.require(current_user.role.name, ["superadmin"])
 
-    # Apply filters
+    query = db.query(CompanyEntity)
+
     for key, value in filters.items():
-        if hasattr(Company, key):
-            query = query.filter(getattr(Company, key) == value)
+        if hasattr(CompanyEntity, key):
+            query = query.filter(getattr(CompanyEntity, key) == value)
 
     total = query.count()
     results = query.offset(offset).limit(limit).all()
 
-    def to_dict(obj):
-        """Convert company to dictionary."""
-        return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
-
-    data = [to_dict(r) for r in results]
-    return {"total": total, "data": data}
+    return PaginatedCompanies(
+        total=total,
+        data=[company_entity_to_domain(company) for company in results],
+    )

@@ -1,169 +1,142 @@
-from decimal import Decimal
-import re
-from uuid import uuid4
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from api.schemas import (
-    PaginationResponse, MessageResponse, ItemCreationRequest, ItemGetResponse, ItemEditRequest, ItemEditResponse
+from api.domain import Item as DomainItem, MessageResult, NotFoundError, PaginatedItems
+from api.domain.access import RolePolicy
+from api.domain.mappers.item_mapper import (
+    item_domain_to_edit_response,
+    item_domain_to_entity,
+    item_domain_to_get_response,
+    item_entity_to_domain,
 )
 from api.models.user import User
-from api.models.item import Item
-
 from api.db import (
     insert_item as db_insert_item,
     get_item_data_by_id as db_get_item_data_by_id,
     edit_item as db_edit_item,
     paginate_items as db_paginate_items,
-    change_item_is_active as db_change_item_is_active
+    change_item_is_active as db_change_item_is_active,
 )
+from api.services.company_service import assert_company_access
 
-from api.services import ( 
-    assert_company_access
-)
 
-from api.utils import validate_item_data
+def create_item(
+    db: Session,
+    current_user: User,
+    name: str,
+    price,
+    quantity: int,
+) -> MessageResult:
+    RolePolicy.require(current_user.role.name, ["admin", "manager"])
 
-def create_item(data: ItemCreationRequest, db: Session, current_user: User) -> MessageResponse:
-    """Create new item with auto-generated SKU."""
-    # Validate input data
-    name, price, quantity = validate_item_data(data)
-
-    # Generate unique SKU from item name
-    sku = generate_sku(name)
-
-    # Create item object
-    item = Item(
+    item = DomainItem.draft(
         name=name,
-        sku=sku,
         price=price,
         quantity=quantity,
-        company_id=current_user.company_id,  # Multi-tenant assignment
-        is_active=True,
+        company_id=current_user.company_id,
     )
 
-    db_insert_item(db, item)
+    db_insert_item(db, item_domain_to_entity(item))
 
-    return MessageResponse(
-        message="Item was successfully added."
-    )
+    return MessageResult(message="Item was successfully added.")
 
-def edit_item(item_id: int, data: ItemEditRequest, db: Session, current_user: User) -> ItemEditResponse:
-    """Update existing item with authorization checks."""
-    item = db_get_item_data_by_id(db, item_id)
 
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
+def edit_item(
+    db: Session,
+    current_user: User,
+    item_id: int,
+    name: str,
+    price,
+    quantity: int,
+):
+    RolePolicy.require(current_user.role.name, ["admin", "manager"])
 
-    # Validate company access
+    entity = db_get_item_data_by_id(db, item_id)
+    if not entity:
+        raise NotFoundError("Item not found")
+
     assert_company_access(
         db,
         is_superadmin=(current_user.role.name == "superadmin"),
         current_user_company_id=current_user.company_id,
-        company_id=item.company_id,
+        company_id=entity.company_id,
     )
 
-    # Validate input data
-    name, price, quantity = validate_item_data(data)
+    item = item_entity_to_domain(entity).update(name, price, quantity)
 
-    # Build update data
-    updates = {
-        "name": name,
-        "price": price,
-        "quantity": quantity,
-    }
-
-    updated_item = db_edit_item(
+    updated_entity = db_edit_item(
         db=db,
-        item_id=item.id,
-        updates=updates
+        item_id=entity.id,
+        updates={
+            "name": item.name.value,
+            "price": item.price.value,
+            "quantity": item.quantity.value,
+        },
     )
 
-    if not updated_item:
-        raise HTTPException(status_code=406, detail="Failed to update the item.")
+    if not updated_entity:
+        raise NotFoundError("Failed to update the item.")
 
-    return ItemEditResponse(
-        name=updated_item.name,
-        price=updated_item.price,
-        quantity=updated_item.quantity
-    )
+    return item_domain_to_edit_response(item_entity_to_domain(updated_entity))
 
-def get_item(item_id: int, db: Session, current_user: User):
-    """Get item details with authorization checks."""
-    item = db_get_item_data_by_id(db, item_id)
 
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
+def get_item(db: Session, current_user: User, item_id: int):
+    RolePolicy.require(current_user.role.name, ["admin", "manager"])
 
-    # Validate company access
+    entity = db_get_item_data_by_id(db, item_id)
+    if not entity:
+        raise NotFoundError("Item not found")
+
     assert_company_access(
         db,
         is_superadmin=(current_user.role.name == "superadmin"),
         current_user_company_id=current_user.company_id,
-        company_id=item.company_id,
+        company_id=entity.company_id,
     )
 
-    return ItemGetResponse(
-        name=item.name,
-        price=item.price,
-        quantity=item.quantity
-    )
+    return item_domain_to_get_response(item_entity_to_domain(entity))
 
-def toggle_item_is_active(item_id: int, db: Session, current_user: User) -> MessageResponse:
-    """Enable/disable item with authorization checks."""
-    item = db_get_item_data_by_id(db, item_id)
 
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
+def toggle_item_is_active(
+    db: Session,
+    current_user: User,
+    item_id: int,
+) -> MessageResult:
+    RolePolicy.require(current_user.role.name, ["admin", "manager"])
 
-    # Validate company access
+    entity = db_get_item_data_by_id(db, item_id)
+    if not entity:
+        raise NotFoundError("Item not found")
+
     assert_company_access(
         db,
         is_superadmin=(current_user.role.name == "superadmin"),
         current_user_company_id=current_user.company_id,
-        company_id=item.company_id,
+        company_id=entity.company_id,
     )
 
-    is_active = not item.is_active
-    db_change_item_is_active(item, is_active)
+    item = item_entity_to_domain(entity).toggle_active()
+    db_change_item_is_active(entity, item.is_active)
 
-    return MessageResponse(
-        message=f"Item was successfully {'activated' if is_active else 'discontinued'}."
-    )
+    status = "activated" if item.is_active else "discontinued"
+    return MessageResult(message=f"Item was successfully {status}.")
 
-def generate_sku(name: str) -> str:
-    """Generate SKU from item name with random suffix."""
-    # Extract alphanumeric characters and take first 8
-    base = re.sub(r"[^A-Z0-9]", "", name.upper())
-    base = base[:8] if base else "ITEM"
-    
-    # Add random suffix for uniqueness
-    return f"{base}-{uuid4().hex[:6].upper()}"
 
 def paginate_items(
     db: Session,
+    current_user: User,
     limit: int,
     offset: int,
     filters: dict,
-    company_id: int,
-):
-    """Get paginated item list with company scoping."""
+) -> PaginatedItems:
     total, results = db_paginate_items(
         db=db,
         filters=filters,
-        company_id=company_id,
+        company_id=current_user.company_id,
         limit=limit,
         offset=offset,
     )
 
-    def serialize(i):
-        """Convert item to dict with formatted status."""
-        d = {c.name: getattr(i, c.name) for c in i.__table__.columns}
-        d["company_name"] = i.company.name if i.company else None
-        d["is_active"] = "Active" if i.is_active else "Discontinued"
-        return d
-
-    return PaginationResponse(
+    return PaginatedItems(
         total=total,
-        data=[serialize(r) for r in results],
+        data=[item_entity_to_domain(item) for item in results],
     )
