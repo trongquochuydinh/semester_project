@@ -1,4 +1,4 @@
-# PAI-E Semester Work
+# PIA-E Semester Work
 
 * Subject: KIV/PIA-E
 * Student: Trong Quoc Huy Dinh
