@@ -5,7 +5,7 @@
 * Personal number: A25N0040P
 * Email: qhdt@students.zcu.cz
 
-## Warehouse Management System (PIA Semester Project)
+## Warehouse Management System
 
 A full-stack web application for managing warehouse inventory and orders with role-based access control.
 
