@@ -1,6 +1,6 @@
-# PIA-E Semester Work
+# PIA-E and DCE Semester Work
 
-* Subject: KIV/PIA-E
+* Subject: KIV/PIA-E, KIV/DCE
 * Student: Trong Quoc Huy Dinh
 * Personal number: A25N0040P
 * Email: qhdt@students.zcu.cz
